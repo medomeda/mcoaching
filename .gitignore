@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+.env
+.env.local
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+test-results
+playwright-report
+# Pièces jointes privées (PRIVATE_STORAGE_PATH par défaut)
+storage/

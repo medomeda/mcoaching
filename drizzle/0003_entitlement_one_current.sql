@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "entitlement_one_current" ON "coaching_entitlement" USING btree ("learner_id") WHERE "coaching_entitlement"."superseded_at" is null;
