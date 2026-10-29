@@ -9,6 +9,7 @@ import { renderEmail } from "../mail/templates";
 import { sendEmail } from "../mail/sender";
 import { db, type Db } from "../pg/client";
 import { auditLog, emailDeliveryLog, notification, notificationEvent, user, verification } from "../pg/schema";
+import { appUrl } from "../appUrl";
 
 /** Transaction Drizzle ou client direct : les helpers acceptent les deux. */
 export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0] | Db;
@@ -198,5 +199,5 @@ export async function sendTransactionalEmail(
 }
 
 export async function sendActivationEmail(u: Pick<UserRowDb, "name" | "email">, token: string): Promise<void> {
-  await sendTransactionalEmail(u, "ACCOUNT_ACTIVATION", `${process.env.APP_URL ?? ""}/activate?token=${token}`);
+  await sendTransactionalEmail(u, "ACCOUNT_ACTIVATION", `${appUrl()}/activate?token=${token}`);
 }

@@ -28,6 +28,7 @@ import {
 import { getAppSettings } from "./config";
 import { activeAdmins, notify, type Tx, type UserRowDb } from "./helpers";
 import { slaResolver } from "./sla";
+import { appUrl } from "../appUrl";
 
 /** Délais entre tentatives d'envoi (minutes calendaires), comme la simulation. */
 export const EMAIL_BACKOFF_MINUTES = [5, 15, 60, 240];
@@ -222,7 +223,7 @@ export async function processEmails(_runStart: Date, s: JobsSummary): Promise<vo
   // par les étapes précédentes de la même exécution sont ainsi envoyés tout de suite.
   const now = new Date();
   const max = (await getAppSettings(db)).email_max_attempts;
-  const appUrl = process.env.APP_URL ?? "";
+  const baseUrl = appUrl();
   for (let i = 0; i < EMAIL_BATCH; i++) {
     const done = await db.transaction(async (tx) => {
       const [log] = await tx
@@ -241,7 +242,7 @@ export async function processEmails(_runStart: Date, s: JobsSummary): Promise<vo
 
       const params = log.templateParams;
       const mail = renderEmail(log.templateKey, params);
-      const result = await sendEmail({ to: log.recipient, ...mail, link: mail.link ? `${appUrl}${mail.link}` : null });
+      const result = await sendEmail({ to: log.recipient, ...mail, link: mail.link ? `${baseUrl}${mail.link}` : null });
       const at = new Date();
       const attempts = log.attemptCount + 1;
       if (result.ok) {

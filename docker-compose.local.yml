@@ -1,0 +1,5 @@
+# Surcharge pour tester la pile en local (Coolify n'en a pas besoin) : publie l'application sur le port 3600.
+services:
+  app:
+    ports:
+      - "3600:3600"

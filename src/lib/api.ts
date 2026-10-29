@@ -148,15 +148,63 @@ export function onServerMutation(listener: () => void): () => void {
   return () => void mutationListeners.delete(listener);
 }
 
-/** Actions d'écriture (jamais les lectures : une lecture qui invaliderait le cache bouclerait indéfiniment). */
-const WRITES = /^(create|update|change|set|resend|assign|end|grant|correct|refund|add|remove|toggle|delete|cancel|save|move|mark|retry|runJobs|submit|abandon|send|take|close|reopen|rate|reassign|recalculate|nudge|complete|bootstrap|upload|attach)/;
+/** Actions d'écriture, nommées une à une : une lecture classée ici par erreur rechargerait les listes en boucle. */
+const WRITES = new Set([
+  "createUser",
+  "updateUser",
+  "changeRole",
+  "setUserStatus",
+  "resendAccess",
+  "updateMyProfile",
+  "changePassword",
+  "completeToken",
+  "bootstrapAdmin",
+  "updateMyCoachProfile",
+  "addAvailability",
+  "toggleAvailability",
+  "deleteAvailability",
+  "addAbsence",
+  "cancelAbsence",
+  "assignCoach",
+  "endAssignment",
+  "grantEntitlement",
+  "updateEntitlement",
+  "setEntitlementStatus",
+  "correctQuota",
+  "refundRequestQuota",
+  "createDraft",
+  "updateDraft",
+  "abandonDraft",
+  "submitRequest",
+  "cancelRequest",
+  "sendMessage",
+  "takeCharge",
+  "closeRequest",
+  "reopenRequest",
+  "rateRequest",
+  "addNote",
+  "reassignRequest",
+  "recalculateDue",
+  "setPriority",
+  "nudgeCoach",
+  "updateServicePolicy",
+  "addHoliday",
+  "removeHoliday",
+  "updateAppSettings",
+  "saveCategory",
+  "moveCategory",
+  "markNotificationRead",
+  "markAllNotificationsRead",
+  "retryEmail",
+  "runJobsNow",
+]);
 
 function live<M extends Record<string, unknown>>(module: string, mod: M) {
   const out: Record<string, unknown> = {};
   for (const k of Object.keys(mod))
     out[k] = async (...args: unknown[]) => {
       const r = await rpc(`${module}/${k}`, args);
-      if (WRITES.test(k)) mutationListeners.forEach((l) => l());
+      if (WRITES.has(k)) mutationListeners.forEach((l) => l());
       return r;
     };
   return out as { [K in keyof M]: Authed<M[K]> };

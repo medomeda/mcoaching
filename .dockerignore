@@ -13,5 +13,5 @@ docs
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
-Dockerfile
-docker-compose*.yml
+*.log
+backup*.sql

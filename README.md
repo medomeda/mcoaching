@@ -145,22 +145,10 @@ Tous les modules tournent sur PostgreSQL en mode serveur. Les modules `src/modul
 
 Les règles d’unicité sont garanties par la base (index uniques partiels : une affectation active et un droit en vigueur par apprenant) et les opérations concurrentes sont sérialisées par verrous de ligne (`SELECT … FOR UPDATE`).
 
-## Déploiement avec Docker
+## Déploiement avec Docker / Coolify
 
-Trois services (`docker-compose.yml`) : `db` (PostgreSQL 16), `migrate` (applique les migrations puis s'arrête), `app` (Next.js, port 3600). Volumes persistants : `db-data` (base) et `storage-data` (pièces jointes).
+`docker-compose.yml` déploie PostgreSQL 16, l'application (port 3600) et des sauvegardes quotidiennes de la base. Les migrations s'appliquent au démarrage du conteneur `app` (`docker-entrypoint.sh`).
 
-```bash
-cp .env.docker.example .env      # renseigner POSTGRES_PASSWORD, AUTH_SECRET, APP_URL…
-docker compose up -d --build
-docker compose logs -f app
-```
-
-Puis ouvrir `APP_URL` (par défaut http://localhost:3600) : sur une base vide, la page `/setup` crée le premier administrateur.
-
-- `POSTGRES_PASSWORD` : sans caractères spéciaux (`openssl rand -hex 24`), il est inséré dans une URL.
-- `AUTH_SECRET` : `openssl rand -hex 32`, à ne plus changer ensuite.
-- En production, placer l'application derrière un proxy HTTPS (Caddy, Nginx, Traefik) et mettre l'adresse publique dans `APP_URL`.
-- Mise à jour : `git pull && docker compose up -d --build` (les migrations sont rejouées automatiquement).
-- Sauvegarde : `docker compose exec db pg_dump -U mcoaching mcoaching > sauvegarde.sql` et copie du volume `storage-data`.
-- Garder **une seule** instance de `app` (le planificateur est intégré) ; pour en lancer plusieurs, mettre `DISABLE_SCHEDULER=true` et exécuter `npm run jobs` par cron.
-- Le mode démo n'existe pas dans l'image (`NEXT_PUBLIC_DEMO_MODE=false` à la compilation).
+- **Coolify (VPS auto-hébergé)** : guide pas à pas dans [docs/DEPLOIEMENT_COOLIFY.md](docs/DEPLOIEMENT_COOLIFY.md).
+- **Test local** : `cp .env.docker.example .env.docker` (renseigner les deux secrets), puis `docker compose -f docker-compose.yml -f docker-compose.local.yml --env-file .env.docker up -d --build`. Premier administrateur : page `/setup`.
+- Une seule instance de `app` (planificateur intégré) ; le mode démo n'existe pas dans l'image.
