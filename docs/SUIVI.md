@@ -88,7 +88,7 @@ Pièges connus :
 | 3 | Suite de tests du mode serveur | Les scénarios e2e (45, 63, 55, 54, 37, 44 vérifications) ont tourné depuis un dossier temporaire et ne sont pas dans le dépôt. Les intégrer comme vraie suite (base jetable). | À faire |
 | 4 | Tests Playwright / acceptation | `e2e/journeys.spec.ts` vise le mode démo ; à adapter au mode serveur. | À faire |
 | 5 | Vérification visuelle | Fenêtre du mot de passe provisoire, mise à jour automatique des listes et redirection après connexion : vérifiés par le code et le typecheck, **pas encore dans le navigateur**. | À faire |
-| 6 | Déploiement | Fichiers Docker écrits (voir README « Déploiement avec Docker »). **Construction de l'image non vérifiée** (pas de réseau dans Docker sur la machine de développement). Reste : premier `docker compose up`, proxy HTTPS, politique de sauvegarde. | En cours |
+| 6 | Déploiement Coolify | Pile Docker prête et **testée en local** (build, migrations au démarrage, connexion). Guide : [DEPLOIEMENT_COOLIFY.md](DEPLOIEMENT_COOLIFY.md). Reste : premier déploiement réel sur le VPS, vérification du domaine d'envoi d'e-mails, copie hors VPS des sauvegardes (base + pièces jointes). | En cours |
 | 7 | Échec ponctuel du test SMTP | Un échec après démarrage à froid du serveur de dev, non reproduit (44/44 au rejeu). Cause non isolée. | À surveiller |
 
 ## 7. État de qualité (dernière vérification)
