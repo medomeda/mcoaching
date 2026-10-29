@@ -12,7 +12,7 @@ import { normalizeEmail } from "@/modules/core/validation";
 import { newId } from "./crypto";
 import { sendTransactionalEmail } from "./live/helpers";
 import { db, schema } from "./pg/client";
-import { appUrl } from "./appUrl";
+import { appUrl, trustedOrigins } from "./appUrl";
 
 export const SESSION_IDLE_SECONDS = 2 * 60 * 60;
 export const MAX_LOGIN_FAILURES = 5;
@@ -58,6 +58,7 @@ async function recordLoginFailure(email: string) {
 
 export const auth = betterAuth({
   baseURL: appUrl() || undefined,
+  trustedOrigins: trustedOrigins(),
   secret: process.env.AUTH_SECRET,
   database: drizzleAdapter(db, { provider: "pg", schema }),
   user: {

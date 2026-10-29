@@ -36,6 +36,8 @@ services:
       AUTH_SECRET: ${SERVICE_HEX_64_AUTHSECRET}
       # Adresse publique EXACTE (https://votre-domaine, sans barre finale) : liens des e-mails, cookies, contrôle d'origine.
       APP_URL: ${APP_URL:-${SERVICE_URL_APP_3600}}
+      # Autres adresses acceptées (ex. https://www.mondomaine.com), séparées par des virgules.
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
       APP_TIMEZONE: ${APP_TIMEZONE:-Africa/Abidjan}
       ACTIVATION_BY_EMAIL: ${ACTIVATION_BY_EMAIL:-false}
       # Une seule instance : le planificateur intégré (échéances, e-mails) reste actif.

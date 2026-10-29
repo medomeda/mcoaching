@@ -6,7 +6,7 @@ import { APIError } from "better-auth/api";
 import { NextResponse, type NextRequest } from "next/server";
 import { AppError, isAppError } from "@/modules/core/errors";
 import { liveModules } from "@/server/live/registry";
-import { appUrl } from "@/server/appUrl";
+import { trustedOrigins } from "@/server/appUrl";
 
 /** Contenu binaire (pièces jointes) transmis en base64 sous la forme `{ $bytes }` par le client. */
 function reviveBytes(_key: string, value: unknown) {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ module: st
     return fail(new AppError("VALIDATION", "Requête invalide."));
   }
   const origin = req.headers.get("origin");
-  if (origin && origin !== req.nextUrl.origin && origin !== appUrl()) {
+  if (origin && origin !== req.nextUrl.origin && !trustedOrigins().includes(origin)) {
     return fail(new AppError("FORBIDDEN", "Origine non autorisée."));
   }
 

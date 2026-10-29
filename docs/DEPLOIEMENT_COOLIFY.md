@@ -37,6 +37,7 @@ Onglet **Environment Variables**.
 | Variable | Valeur | Rôle |
 |---|---|---|
 | `APP_URL` | `https://coaching.mondomaine.com` | Adresse publique **exacte**, sans `/` final. Utilisée pour les liens des e-mails, les cookies et le contrôle d'origine. Un domaine différent de celui de l'interface provoque des erreurs « Origine non autorisée ». |
+| `TRUSTED_ORIGINS` | (vide) ou `https://www.mondomaine.com` | Autres adresses autorisées à se connecter, séparées par des virgules. |
 | `ACTIVATION_BY_EMAIL` | `false` (tant que le SMTP ne livre pas) puis `true` | `false` : compte actif d'emblée + mot de passe provisoire donné à l'administrateur. |
 | `EMAIL_PROVIDER` | `smtp` (ou vide) | Vide = e-mails écrits dans les journaux seulement. |
 | `EMAIL_FROM` | `Coaching BRVM <no-reply@mondomaine.com>` | Doit appartenir à un domaine **vérifié** chez le fournisseur SMTP. |
@@ -75,7 +76,7 @@ Aucune variable `NEXT_PUBLIC_*` à saisir : le mode serveur est figé dans l'ima
 | Symptôme | Cause probable |
 |---|---|
 | « No Available Server » | Le domaine n'a pas le suffixe `:3600`, ou `app` n'est pas encore « healthy » (voir Runtime Logs). |
-| Boucle de redirection vers `/login` ou « Origine non autorisée » | `APP_URL` différent du domaine réellement utilisé (http/https, `www`, barre finale). |
+| « Invalid origin » à la connexion, ou « Origine non autorisée » | `APP_URL` différent du domaine réellement utilisé (http/https, `www`, barre finale). |
 | `app` redémarre en boucle, journal « Migration… erreur » | Base inaccessible ou migration en échec : lire le message dans les journaux. |
 | `SMTP_550` dans les envois | Domaine d'expédition non vérifié chez le fournisseur : corriger `EMAIL_FROM`. |
 | Connexion refusée après redéploiement | `SERVICE_HEX_64_AUTHSECRET` modifié (sessions invalidées, reconnexion simple) ou mot de passe oublié. |
