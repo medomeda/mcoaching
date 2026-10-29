@@ -1,25 +1,27 @@
-# Déploiement : PostgreSQL + migrations + application.
-#   cp .env.docker.example .env   (puis renseigner les valeurs)
-#   docker compose up -d --build
+version: '3.8'
+
 services:
+  # ========================================================
+  # 1. BASE DE DONNÉES POSTGRESQL (Postgres 16)
+  # ========================================================
   db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-mcoaching}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD dans .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD dans les variables Coolify}
       POSTGRES_DB: ${POSTGRES_DB:-mcoaching}
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-mcoaching} -d $${POSTGRES_DB:-mcoaching}"]
       interval: 5s
       timeout: 3s
       retries: 20
-    # Port exposé sur la machine locale uniquement (sauvegardes, outils) ; supprimer pour fermer tout accès.
-    ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
 
+  # ========================================================
+  # 2. MIGRATIONS DRIZZLE (Exécuté une fois avant l'app)
+  # ========================================================
   migrate:
     build:
       context: .
@@ -31,6 +33,9 @@ services:
         condition: service_healthy
     restart: "no"
 
+  # ========================================================
+  # 3. APPLICATION NEXT.JS
+  # ========================================================
   app:
     build:
       context: .
@@ -38,11 +43,14 @@ services:
       args:
         NEXT_PUBLIC_DEMO_MODE: "false"
     restart: unless-stopped
+    expose:
+      - "3600" # Expose interne pour le proxy Coolify (Traefik)
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-mcoaching}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mcoaching}
-      AUTH_SECRET: ${AUTH_SECRET:?Définir AUTH_SECRET dans .env (openssl rand -hex 32)}
-      APP_URL: ${APP_URL:-http://localhost:3600}
+      AUTH_SECRET: ${AUTH_SECRET:?Définir AUTH_SECRET dans Coolify (openssl rand -hex 32)}
+      APP_URL: ${APP_URL}
       APP_TIMEZONE: ${APP_TIMEZONE:-Africa/Abidjan}
+      PRIVATE_STORAGE_PATH: /data/storage
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       SMTP_HOST: ${SMTP_HOST:-}
@@ -50,7 +58,6 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       ACTIVATION_BY_EMAIL: ${ACTIVATION_BY_EMAIL:-false}
-      # Une seule instance de l'application : le planificateur intégré peut rester actif.
       DISABLE_SCHEDULER: ${DISABLE_SCHEDULER:-false}
     volumes:
       - storage-data:/data/storage
@@ -59,15 +66,15 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    ports:
-      - "${APP_PORT:-3600}:3600"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3600/login"]
-      interval: 30s
+      interval: 15s
       timeout: 5s
       retries: 3
-      start_period: 20s
+      start_period: 30s
 
 volumes:
   db-data:
+    name: mcoaching_db_data
   storage-data:
+    name: mcoaching_storage_data
