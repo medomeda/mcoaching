@@ -16,7 +16,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Tableau de bord" description="Supervision du service de coaching individuel." actions={picker} />
+      <PageHeader title="Tableau de bord" description="Supervision du service d’accompagnement individuel." actions={picker} />
       {q.isLoading ? (
         <Loading />
       ) : q.error ? (

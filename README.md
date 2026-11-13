@@ -1,6 +1,6 @@
-# Coaching BRVM — MVP (phase frontend)
+# Mentora — plateforme d’accompagnement individuel
 
-Application web de gestion du coaching individuel asynchrone pour une communauté d’investissement BRVM (cf. [docs/PRD.md](docs/PRD.md)).
+Application web de gestion de l’accompagnement individuel asynchrone, pour les coachs, formateurs et mentors de tout domaine (finance, développement personnel, formation, entrepreneuriat…). Le nom, les catégories et la mention affichée se règlent par espace dans **Paramètres → Identité** (cf. [docs/PRD.md](docs/PRD.md), rédigé à l’origine pour un contexte boursier).
 
 **Phase actuelle** : frontend complet des trois espaces (administrateur, coach, apprenant), branché sur un **backend simulé dans le navigateur**. Les règles métier ne sont pas simulées visuellement : elles sont implémentées et testées dans des modules de domaine, derrière une façade d’API qui applique authentification, permissions, validation et transactions. Architecture et modèle de données : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -147,8 +147,9 @@ Les règles d’unicité sont garanties par la base (index uniques partiels : un
 
 ## Déploiement avec Docker / Coolify
 
-`docker-compose.yml` déploie PostgreSQL 16, l'application (port 3600) et des sauvegardes quotidiennes de la base. Les migrations s'appliquent au démarrage du conteneur `app` (`docker-entrypoint.sh`).
+Deux variantes, même code (l'application applique ses migrations au démarrage du conteneur, `docker-entrypoint.sh`) :
 
-- **Coolify (VPS auto-hébergé)** : guide pas à pas dans [docs/DEPLOIEMENT_COOLIFY.md](docs/DEPLOIEMENT_COOLIFY.md).
-- **Test local** : `cp .env.docker.example .env.docker` (renseigner les deux secrets), puis `docker compose -f docker-compose.yml -f docker-compose.local.yml --env-file .env.docker up -d --build`. Premier administrateur : page `/setup`.
-- Une seule instance de `app` (planificateur intégré) ; le mode démo n'existe pas dans l'image.
+- `docker-compose.yml` : **application seule + base PostgreSQL indépendante** (ressource PostgreSQL de Coolify, ou autre serveur). `DATABASE_URL` est à saisir ; `DATABASE_SSL` optionnel. Sonde de santé : `/api/health`.
+- `docker-compose.with-db.yml` : **tout-en-un** (PostgreSQL + application + sauvegardes quotidiennes).
+
+Guide pas à pas (création de la base, sauvegardes S3, réseau, variables, reprise des données, dépannage) : [docs/DEPLOIEMENT_COOLIFY.md](docs/DEPLOIEMENT_COOLIFY.md). Une seule instance de `app` (planificateur intégré) ; le mode démo n'existe pas dans l'image.

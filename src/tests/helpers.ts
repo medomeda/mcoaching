@@ -73,11 +73,11 @@ export async function relogin(s: Awaited<ReturnType<typeof standardSetup>>, lear
   s.learner2.token = (await login("learner2@test.example")).token;
 }
 
-export async function newDraft(learner: { token: string }, categoryId: string, subject = "Question sur les obligations") {
+export async function newDraft(learner: { token: string }, categoryId: string, subject = "Question sur mon plan d’action") {
   return requests.createDraft(learner, {
     category_id: categoryId,
     subject,
-    description: "Description suffisamment détaillée de ma question de coaching.",
+    description: "Description suffisamment détaillée de ma question d’accompagnement.",
   });
 }
 

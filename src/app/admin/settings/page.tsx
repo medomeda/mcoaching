@@ -1,22 +1,24 @@
 "use client";
-import { ArrowDown, ArrowUp, CalendarOff, Clock, FolderTree, Paperclip, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowDown, ArrowUp, Building2, CalendarOff, Clock, FolderTree, LayoutTemplate, Paperclip, Palette, Pencil, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Alert, Badge, Card, CardBody, CardHeader, ErrorState, Loading, PageHeader, Tabs } from "@/components/ui/display";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
-import { Checkbox, Field, FormError, Input, Textarea } from "@/components/ui/form";
+import { Checkbox, Field, FormError, Input, Select, Textarea } from "@/components/ui/form";
 import { api } from "@/lib/api";
 import { useAction, useApi } from "@/lib/hooks";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { DAY_LABELS } from "@/lib/labels";
+import { CATEGORY_PACKS } from "@/modules/core/categoryPacks";
+import { DEFAULT_BRAND_NAME } from "@/modules/core/branding";
 
 type Settings = Awaited<ReturnType<typeof api.settings.getServiceSettings>>;
-type Tab = "service" | "holidays" | "rules" | "categories";
+type Tab = "identity" | "service" | "holidays" | "rules" | "categories";
 
 export default function SettingsPage() {
   const q = useApi(["service-settings"], () => api.settings.getServiceSettings());
-  const [tab, setTab] = useState<Tab>("service");
+  const [tab, setTab] = useState<Tab>("identity");
   return (
     <div className="space-y-4">
       <PageHeader title="Paramètres" description="Paramètres de service centralisés. Chaque modification est motivée et enregistrée dans le journal d’audit." />
@@ -24,6 +26,7 @@ export default function SettingsPage() {
         value={tab}
         onChange={setTab}
         items={[
+          { value: "identity", label: "Identité" },
           { value: "service", label: "Calendrier et délais" },
           { value: "holidays", label: "Jours fériés" },
           { value: "rules", label: "Pièces jointes et règles" },
@@ -31,6 +34,7 @@ export default function SettingsPage() {
         ]}
       />
       {q.isLoading ? <Loading /> : q.error ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : null}
+      {q.data && tab === "identity" && <Identity s={q.data} />}
       {q.data && tab === "service" && <ServicePolicy s={q.data} />}
       {q.data && tab === "holidays" && <Holidays s={q.data} />}
       {q.data && tab === "rules" && <Rules s={q.data} />}
@@ -182,6 +186,80 @@ function Holidays({ s }: { s: Settings }) {
   );
 }
 
+function Identity({ s }: { s: Settings }) {
+  const init = () => ({
+    brand_name: s.app.brand_name ?? DEFAULT_BRAND_NAME,
+    organization_name: s.app.organization_name ?? "",
+    organization_description: s.app.organization_description ?? "",
+    contact_email: s.app.contact_email ?? "",
+    contact_phone: s.app.contact_phone ?? "",
+    website_url: s.app.website_url ?? "",
+    notice_text: s.app.notice_text ?? "",
+  });
+  const [form, setForm] = useState(init);
+  const [confirm, setConfirm] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  useEffect(() => setForm(init()), [s]); // eslint-disable-line react-hooks/exhaustive-deps
+  const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <Card>
+        <CardHeader title="Plateforme" icon={<Palette className="h-4 w-4" />} description="Le nom apparaît dans l’interface, l’onglet du navigateur et les e-mails." />
+        <CardBody className="space-y-4">
+          <Field label="Nom de la plateforme" required error={errors.brand_name}>
+            {(p) => <Input {...p} maxLength={60} value={form.brand_name} onChange={set("brand_name")} />}
+          </Field>
+          <Field label="Mention affichée aux membres" hint="Facultatif. Ex. : « Les échanges sont pédagogiques et ne constituent pas un conseil personnalisé. » Affichée sur l’écran de connexion, dans le menu et dans le formulaire de demande." error={errors.notice_text}>
+            {(p) => <Textarea {...p} rows={4} maxLength={500} value={form.notice_text} onChange={set("notice_text")} />}
+          </Field>
+        </CardBody>
+      </Card>
+      <Card>
+        <CardHeader title="Entreprise, coach ou formateur" icon={<Building2 className="h-4 w-4" />} description="Qui propose l’accompagnement, et comment le joindre. Visible sur l’écran de connexion." />
+        <CardBody className="space-y-4">
+          <Field label="Nom de l’entreprise, du coach ou du formateur" error={errors.organization_name}>
+            {(p) => <Input {...p} maxLength={120} value={form.organization_name} onChange={set("organization_name")} />}
+          </Field>
+          <Field label="Présentation courte" hint="300 caractères maximum." error={errors.organization_description}>
+            {(p) => <Textarea {...p} rows={3} maxLength={300} value={form.organization_description} onChange={set("organization_description")} />}
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="E-mail de contact" error={errors.contact_email}>
+              {(p) => <Input {...p} type="email" value={form.contact_email} onChange={set("contact_email")} />}
+            </Field>
+            <Field label="Téléphone" error={errors.contact_phone}>
+              {(p) => <Input {...p} type="tel" value={form.contact_phone} onChange={set("contact_phone")} placeholder="+225 07 00 00 00 00" />}
+            </Field>
+          </div>
+          <Field label="Site web" error={errors.website_url}>
+            {(p) => <Input {...p} type="url" value={form.website_url} onChange={set("website_url")} placeholder="https://" />}
+          </Field>
+        </CardBody>
+      </Card>
+      <div className="lg:col-span-2">
+        <Button onClick={() => setConfirm(true)}>Enregistrer l’identité</Button>
+      </div>
+      <ConfirmDialog
+        open={confirm}
+        onOpenChange={setConfirm}
+        title="Enregistrer l’identité ?"
+        confirmLabel="Enregistrer"
+        reason={{ label: "Motif", required: true }}
+        onConfirm={async (reason) => {
+          setErrors({});
+          try {
+            await api.settings.updateIdentity({ ...form, reason });
+          } catch (e) {
+            setErrors((e as { fieldErrors?: Record<string, string> }).fieldErrors ?? {});
+            throw e;
+          }
+          toast.success("Identité enregistrée.");
+        }}
+      />
+    </div>
+  );
+}
+
 function Rules({ s }: { s: Settings }) {
   const init = () => ({
     attachment_max_size_mb: Math.round((s.app.attachment_max_size_bytes / 1024 / 1024) * 10) / 10,
@@ -246,48 +324,151 @@ function Rules({ s }: { s: Settings }) {
   );
 }
 
+/** Bouton d'action compact (icône seule) : cible de 32 px, libellé accessible et info-bulle. */
+function IconAction({ label, onClick, disabled, tone = "neutral", children }: { label: string; onClick: () => void; disabled?: boolean; tone?: "neutral" | "danger"; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-30 ${
+        tone === "danger" ? "text-slate-400 hover:bg-red-50 hover:text-red-600" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 function Categories() {
   const q = useApi(["categories", "all"], () => api.settings.listCategories(true));
   const [edit, setEdit] = useState<{ id: string | null; name: string; description: string; is_active: boolean } | null>(null);
   const save = useAction(() => api.settings.saveCategory(edit!.id, { name: edit!.name, description: edit!.description, is_active: edit!.is_active }), { success: "Catégorie enregistrée.", silentError: true, onSuccess: () => setEdit(null) });
   const move = useAction((id: string, dir: -1 | 1) => api.settings.moveCategory(id, dir));
+  const [pack, setPack] = useState("");
+  const [replaceOpen, setReplaceOpen] = useState(false);
+  const [del, setDel] = useState<{ id: string; name: string } | null>(null);
+  const addPack = useAction(() => api.settings.applyCategoryPack({ pack, mode: "add" }), {
+    success: (r) => (r.added > 0 ? `${r.added} catégorie(s) ajoutée(s).` : "Ces catégories existent déjà."),
+    onSuccess: () => setPack(""),
+  });
+  const packLabel = CATEGORY_PACKS.find((m) => m.id === pack)?.label ?? "";
   if (q.isLoading) return <Loading />;
   if (q.error) return <ErrorState error={q.error} />;
+  const list = q.data!;
+  const activeCount = list.filter((c) => c.is_active).length;
+  const selectedPack = CATEGORY_PACKS.find((m) => m.id === pack);
   return (
     <Card>
       <CardHeader
         title="Catégories de demandes"
         icon={<FolderTree className="h-4 w-4" />}
-        description="Thématiques pédagogiques — elles ne constituent pas des recommandations financières."
+        description={`${list.length} catégorie(s), dont ${activeCount} active(s) — proposées aux membres lors de la création d’une demande.`}
         actions={
           <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setEdit({ id: null, name: "", description: "", is_active: true })}>
             Nouvelle catégorie
           </Button>
         }
       />
+
+      <section className="border-b border-slate-100 bg-slate-50/70 px-4 py-4 sm:px-5" aria-labelledby="pack-title">
+        <div className="flex items-start gap-3">
+          <LayoutTemplate className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+          <div className="min-w-0 flex-1 space-y-3">
+            <div>
+              <h3 id="pack-title" className="text-sm font-semibold text-slate-800">
+                Partir d’un modèle
+              </h3>
+              <p className="text-xs text-slate-500">Choisissez le domaine d’accompagnement, puis remplacez la liste ou complétez-la.</p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Select aria-label="Modèle de catégories" value={pack} onChange={(e) => setPack(e.target.value)} className="w-full sm:max-w-xs">
+                <option value="">Choisir un modèle…</option>
+                {CATEGORY_PACKS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
+              </Select>
+              <div className="flex gap-2">
+                <Button size="sm" className="flex-1 sm:flex-none" disabled={!pack} onClick={() => setReplaceOpen(true)}>
+                  Remplacer la liste
+                </Button>
+                <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={!pack} loading={addPack.pending} onClick={() => void addPack.run()}>
+                  Ajouter à la liste
+                </Button>
+              </div>
+            </div>
+            {selectedPack && (
+              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                <p className="font-medium text-slate-700">{selectedPack.description}</p>
+                <p className="mt-1">{selectedPack.categories.map(([n]) => n).join(" · ")}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       <ul className="divide-y divide-slate-100">
-        {q.data!.map((c, i) => (
-          <li key={c.id} className="flex items-center gap-3 px-4 py-2.5 sm:px-5">
-            <div className="flex flex-col">
-              <button aria-label="Monter" disabled={i === 0} onClick={() => void move.run(c.id, -1)} className="text-slate-400 hover:text-slate-700 disabled:opacity-30">
-                <ArrowUp className="h-3.5 w-3.5" />
-              </button>
-              <button aria-label="Descendre" disabled={i === q.data!.length - 1} onClick={() => void move.run(c.id, 1)} className="text-slate-400 hover:text-slate-700 disabled:opacity-30">
-                <ArrowDown className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                {c.name} {!c.is_active && <Badge>Désactivée</Badge>}
+        {list.map((c, i) => (
+          <li key={c.id} className={`grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-2 px-4 py-3 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:px-5 ${c.is_active ? "" : "bg-slate-50/60"}`}>
+            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-medium tabular-nums text-slate-600 sm:mt-0" aria-hidden>
+              {i + 1}
+            </span>
+            <div className={`min-w-0 ${c.is_active ? "" : "opacity-70"}`}>
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-slate-900">
+                <span className="break-words">{c.name}</span>
+                {!c.is_active && <Badge>Désactivée</Badge>}
               </p>
-              {c.description && <p className="truncate text-xs text-slate-500">{c.description}</p>}
+              {c.description && <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{c.description}</p>}
             </div>
-            <Button size="sm" variant="outline" onClick={() => setEdit({ id: c.id, name: c.name, description: c.description, is_active: c.is_active })}>
-              Modifier
-            </Button>
+            <div className="col-start-2 flex items-center gap-0.5 sm:col-start-3 sm:justify-end">
+              <div className="mr-1 flex items-center rounded-lg border border-slate-200">
+                <IconAction label={`Monter « ${c.name} »`} disabled={i === 0} onClick={() => void move.run(c.id, -1)}>
+                  <ArrowUp className="h-4 w-4" />
+                </IconAction>
+                <span className="h-5 w-px bg-slate-200" aria-hidden />
+                <IconAction label={`Descendre « ${c.name} »`} disabled={i === list.length - 1} onClick={() => void move.run(c.id, 1)}>
+                  <ArrowDown className="h-4 w-4" />
+                </IconAction>
+              </div>
+              <IconAction label={`Modifier « ${c.name} »`} onClick={() => setEdit({ id: c.id, name: c.name, description: c.description, is_active: c.is_active })}>
+                <Pencil className="h-4 w-4" />
+              </IconAction>
+              <IconAction label={`Supprimer « ${c.name} »`} tone="danger" onClick={() => setDel({ id: c.id, name: c.name })}>
+                <Trash2 className="h-4 w-4" />
+              </IconAction>
+            </div>
           </li>
         ))}
       </ul>
+      <ConfirmDialog
+        open={replaceOpen}
+        onOpenChange={setReplaceOpen}
+        title={`Remplacer la liste par le modèle « ${packLabel} » ?`}
+        description="Les catégories jamais utilisées sont supprimées. Celles déjà liées à des demandes sont désactivées (l’historique est conservé) ou réactivées si le modèle les contient."
+        confirmLabel="Remplacer la liste"
+        tone="danger"
+        onConfirm={async () => {
+          const r = await api.settings.applyCategoryPack({ pack, mode: "replace" });
+          setPack("");
+          toast.success(`Liste remplacée : ${r.added} ajoutée(s), ${r.removed} supprimée(s), ${r.deactivated} désactivée(s).`);
+        }}
+      />
+      <ConfirmDialog
+        open={!!del}
+        onOpenChange={(v) => !v && setDel(null)}
+        title={`Supprimer la catégorie « ${del?.name ?? ""} » ?`}
+        description="Possible seulement si aucune demande ne l’utilise ; sinon, désactivez-la depuis « Modifier »."
+        confirmLabel="Supprimer"
+        tone="danger"
+        onConfirm={async () => {
+          await api.settings.deleteCategory(del!.id);
+          toast.success("Catégorie supprimée.");
+        }}
+      />
       {edit && (
         <Dialog
           open

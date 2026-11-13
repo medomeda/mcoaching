@@ -83,7 +83,7 @@ export default function AdminUserDetail() {
                   ? ([
                       ["Coach affecté", u.coach ? <Link key="c" href={`/admin/coaches/${u.coach.id}`} className="text-brand-700 hover:underline">{u.coach.full_name}</Link> : <Badge key="n" tone="warning">Aucun</Badge>],
                       [
-                        "Droit au coaching",
+                        "Droit d’accompagnement",
                         <span key="e" className="flex items-center gap-2">
                           <Badge tone={u.entitlement_status === "ACTIVE" ? "success" : "warning"}>{ENTITLEMENT_STATUS_LABELS[u.entitlement_status ?? "NONE"]}</Badge>
                           <Link href={`/admin/entitlements/${u.id}`} className="text-xs text-brand-700 hover:underline">Gérer</Link>

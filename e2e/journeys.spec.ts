@@ -56,9 +56,9 @@ test("apprenant : création et soumission d'une demande", async () => {
   const { page, errors } = await login(context, `kouadio.yao@${D}`);
   await expect(page.getByRole("heading", { name: /Bonjour Kouadio/ })).toBeVisible();
   await page.getByRole("link", { name: "Nouvelle demande" }).first().click();
-  await page.getByLabel(/Gestion du risque/).check();
-  await page.getByLabel("Sujet").fill("Comprendre le risque de liquidité d’un titre");
-  await page.getByLabel("Description").fill("Certains titres sont très peu échangés. Comment cela affecte-t-il le risque de mon investissement ?");
+  await page.getByLabel(/Blocages et prise de décision/).check();
+  await page.getByLabel("Sujet").fill("Choisir entre deux priorités");
+  await page.getByLabel("Description").fill("J’hésite entre deux priorités pour ce trimestre. Comment structurer ma décision ?");
   await page.getByRole("button", { name: "Vérifier le récapitulatif" }).click();
   await expect(page.getByText("Récapitulatif", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Soumettre la demande" }).click();
@@ -75,12 +75,12 @@ test("coach : consultation (enregistrement initial) puis demande de précisions"
   await page.goto(requestUrl.replace("/learner/", "/coach/"));
   await expect(page.getByText("En attente du coach").first()).toBeVisible();
   await page.getByRole("radio", { name: "Demander des précisions" }).click();
-  await page.getByLabel("Message", { exact: true }).fill("Bonjour Kouadio, de quel titre parlez-vous précisément ?");
+  await page.getByLabel("Message", { exact: true }).fill("Bonjour Kouadio, de quelles priorités parlez-vous précisément ?");
   await page.getByRole("button", { name: "Envoyer" }).click();
   await expect(page.getByText("En attente de l’apprenant").first()).toBeVisible();
-  await page.getByLabel("Nouvelle note interne").fill("Note privée : vérifier la liquidité du titre.");
+  await page.getByLabel("Nouvelle note interne").fill("Note privée : vérifier le contexte de la demande.");
   await page.getByRole("button", { name: "Ajouter la note" }).click();
-  await expect(page.getByText("Note privée : vérifier la liquidité du titre.")).toBeVisible();
+  await expect(page.getByText("Note privée : vérifier le contexte de la demande.")).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -89,7 +89,7 @@ test("apprenant : voit la demande de précisions, répond, ne voit pas les notes
   await page.goto(requestUrl);
   await expect(page.getByText("Votre coach attend votre réponse")).toBeVisible();
   await expect(page.getByText("Note privée")).toHaveCount(0);
-  await page.getByLabel("Message", { exact: true }).fill("Il s’agit d’un titre du compartiment secondaire.");
+  await page.getByLabel("Message", { exact: true }).fill("Il s’agit de mon projet professionnel et de ma formation.");
   await page.getByRole("button", { name: "Envoyer" }).click();
   await expect(page.getByText("En cours").first()).toBeVisible();
   expect(errors).toEqual([]);
@@ -118,7 +118,7 @@ test("admin : supervision, réaffectation d'une demande en retard, audit", async
   await expect(page.getByText("Demandes nécessitant une intervention")).toBeVisible();
   await page.getByRole("link", { name: /En retard/ }).first().click();
   await page.waitForURL(/view=overdue/);
-  await page.getByText("Gestion d’une baisse importante").click();
+  await page.getByText("Gérer un découragement face à une difficulté").click();
   await expect(page.getByText(/Consultation à des fins de supervision/)).toBeVisible();
   await page.getByRole("button", { name: "Réaffecter" }).click();
   const fatouOption = await page.getByLabel("Nouveau coach").locator("option", { hasText: "Fatou Ndiaye" }).getAttribute("value");
@@ -162,7 +162,7 @@ test("admin crée un apprenant ; activation par le lien reçu dans la boîte mai
   await learner.getByRole("button", { name: "Se connecter" }).click();
   await learner.waitForURL(/\/learner/);
   // Sans coach ni droit : explication et pas de bouton de soumission (PRD §6.1).
-  await expect(learner.getByText(/Aucun droit au coaching ne vous a été attribué/)).toBeVisible();
+  await expect(learner.getByText(/Aucun droit d’accompagnement ne vous a été attribué/)).toBeVisible();
   await expect(learner.getByText(/Aucun coach ne vous est encore affecté/).first()).toBeVisible();
   await expect(learner.getByRole("link", { name: "Nouvelle demande" }).and(learner.locator("main a"))).toHaveCount(0);
   expect(errors).toEqual([]);
@@ -174,7 +174,7 @@ test("horloge de démo : le dépassement d'échéance produit le retard et l'ale
   await page.getByRole("button", { name: "+3 jours" }).click();
   await expect(page.getByText(/Horloge avancée/)).toBeVisible();
   await page.goto("/admin/requests?view=overdue");
-  await expect(page.getByText("Ouvrir un compte titres auprès d’une SGI")).toBeVisible();
+  await expect(page.getByText("Mettre en place un tableau de suivi")).toBeVisible();
   await page.goto("/admin/notifications");
   await expect(page.getByText(/Escalade/).first()).toBeVisible();
   await page.getByRole("button", { name: /^Démo/ }).click();
@@ -223,7 +223,7 @@ test("mobile : la messagerie reste utilisable", async ({ browser }) => {
   await page.waitForURL(/\/learner/);
   await page.getByRole("button", { name: "Ouvrir le menu" }).click();
   await page.getByRole("link", { name: "Mes demandes" }).click();
-  await page.getByText("Comment évaluer le niveau de risque").click();
+  await page.getByText("Comment progresser plus vite sur une compétence").click();
   await expect(page.getByLabel("Message", { exact: true })).toBeVisible();
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(392);

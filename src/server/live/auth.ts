@@ -7,29 +7,50 @@ import { APIError } from "better-auth/api";
 import { count, eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { z } from "zod";
+import { CATEGORY_PACKS, packById } from "@/modules/core/categoryPacks";
 import { AppError, businessRule, validation } from "@/modules/core/errors";
 import { zPassword } from "@/modules/core/password";
 import { parse, zEmail, zPhone, zText } from "@/modules/core/validation";
 import { auth } from "../auth";
 import { newId } from "../crypto";
 import { db } from "../pg/client";
-import { session, user, verification } from "../pg/schema";
+import { appSettings, coachingCategory, session, user, verification } from "../pg/schema";
+import { getAppSettings } from "./config";
 import { authenticate, type LiveCall } from "./context";
 import { activationByEmail, hashPassword, setCredentialPassword } from "./credentials";
 import { activationIdentifier, audit, toPublicUser, type Tx } from "./helpers";
 
 const INVALID_LINK = "Ce lien est invalide ou a expiré. Demandez un nouveau lien.";
+const CATEGORY_PACK_IDS = CATEGORY_PACKS.map((p) => p.id) as [string, ...string[]];
 const zPurpose = z.enum(["ACTIVATION", "PASSWORD_RESET"]);
 const zToken = z.string().min(10).max(200);
 
 export async function systemStatus(_call: LiveCall) {
   const n = (await db.select({ n: count() }).from(user))[0]?.n ?? 0;
-  return { hasUsers: n > 0, demoSeeded: false, activationByEmail: activationByEmail(), now: new Date().toISOString() };
+  const s = await getAppSettings(db);
+  return {
+    hasUsers: n > 0,
+    demoSeeded: false,
+    activationByEmail: activationByEmail(),
+    brandName: s.brand_name,
+    notice: s.notice_text,
+    organization: { name: s.organization_name, description: s.organization_description, contact_email: s.contact_email, contact_phone: s.contact_phone, website_url: s.website_url },
+    now: new Date().toISOString(),
+  };
 }
 
 /** Création du premier administrateur, possible uniquement sur une base sans utilisateur. */
 export async function bootstrapAdmin(_call: LiveCall, input: unknown) {
-  const data = parse(z.object({ full_name: zText(2, 120, "Le nom"), email: zEmail, password: zPassword }), input);
+  const data = parse(
+    z.object({
+      full_name: zText(2, 120, "Le nom"),
+      email: zEmail,
+      password: zPassword,
+      brand_name: zText(2, 60, "Le nom de la plateforme").optional(),
+      category_pack: z.enum(CATEGORY_PACK_IDS).optional(),
+    }),
+    input,
+  );
   const hash = await hashPassword(data.password);
   await db.transaction(async (tx) => {
     // Sérialise les initialisations concurrentes.
@@ -39,6 +60,13 @@ export async function bootstrapAdmin(_call: LiveCall, input: unknown) {
     const id = newId("usr");
     await tx.insert(user).values({ id, name: data.full_name, email: data.email, emailVerified: true, role: "ADMIN", status: "ACTIVE" });
     await setCredentialPassword(tx, id, hash);
+    if (data.brand_name) await tx.update(appSettings).set({ brandName: data.brand_name }).where(eq(appSettings.id, "app"));
+    const pack = data.category_pack ? packById(data.category_pack) : undefined;
+    if (pack) {
+      // Base sans utilisateur : aucune demande ne référence encore les catégories d'amorçage.
+      await tx.delete(coachingCategory);
+      await tx.insert(coachingCategory).values(pack.categories.map(([name, description], i) => ({ id: `cat_${i + 1}`, name, description, isActive: true, sortOrder: i + 1 })));
+    }
     await audit(tx, { actor_id: id, action: "BOOTSTRAP_ADMIN", entity_type: "user", entity_id: id, reason: null });
   });
 }

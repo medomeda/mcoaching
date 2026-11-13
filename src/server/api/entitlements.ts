@@ -1,5 +1,5 @@
 /**
- * Droits au coaching et registre de quota (PRD §7.2, §9.5).
+ * Droits d’accompagnement et registre de quota (PRD §7.2, §9.5).
  * Le registre est append-only ; toute correction exige un motif et un auteur.
  */
 import { z } from "zod";
@@ -103,7 +103,7 @@ export async function grantEntitlement(call: Call, input: unknown) {
   return store().transaction((db, now) => {
     reauth(db, a);
     const learner = getUser(db, data.learnerId);
-    if (learner.role !== "LEARNER") throw businessRule("Un droit au coaching ne peut être attribué qu’à un apprenant.");
+    if (learner.role !== "LEARNER") throw businessRule("Un droit d’accompagnement ne peut être attribué qu’à un apprenant.");
     const iso = now.toISOString();
     const previous = currentEntitlement(db, learner.id);
     if (previous) {
@@ -137,8 +137,8 @@ export async function grantEntitlement(call: Call, input: unknown) {
     notify(db, now, {
       recipients: [learner],
       type: "ACCOUNT",
-      title: "Votre droit au coaching a été mis à jour",
-      summary: "Un droit au coaching vous a été attribué. Consultez votre espace pour en voir le détail.",
+      title: "Votre droit d’accompagnement a été mis à jour",
+      summary: "Un droit d’accompagnement vous a été attribué. Consultez votre espace pour en voir le détail.",
       eventKey: `ENTITLEMENT_GRANTED:${ent.id}`,
     });
     return ent;
@@ -210,10 +210,10 @@ export async function setEntitlementStatus(call: Call, entitlementId: string, in
     notify(db, now, {
       recipients: [learner],
       type: "ACCOUNT",
-      title: data.action === "REACTIVATE" ? "Votre droit au coaching est réactivé" : "Votre droit au coaching a changé",
+      title: data.action === "REACTIVATE" ? "Votre droit d’accompagnement est réactivé" : "Votre droit d’accompagnement a changé",
       summary:
         data.action === "REACTIVATE"
-          ? "Vous pouvez de nouveau soumettre des demandes de coaching."
+          ? "Vous pouvez de nouveau soumettre des demandes d’accompagnement."
           : "Vous ne pouvez plus soumettre de nouvelle demande. Vos demandes en cours restent accessibles.",
       eventKey: `ENTITLEMENT_STATUS:${ent.id}:${now.toISOString()}`,
     });

@@ -5,7 +5,7 @@ import { AppShell, type NavItem } from "@/components/layout/app-shell";
 
 const NAV: NavItem[] = [
   { href: "/admin", label: "Tableau de bord", icon: <LayoutDashboard className="h-4.5 w-4.5" />, exact: true },
-  { href: "/admin/requests", label: "Demandes de coaching", icon: <Inbox className="h-4.5 w-4.5" /> },
+  { href: "/admin/requests", label: "Demandes d’accompagnement", icon: <Inbox className="h-4.5 w-4.5" /> },
   { href: "/admin/learners", label: "Apprenants", icon: <GraduationCap className="h-4.5 w-4.5" /> },
   { href: "/admin/coaches", label: "Coachs", icon: <UsersRound className="h-4.5 w-4.5" /> },
   { href: "/admin/assignments", label: "Affectations", icon: <Link2 className="h-4.5 w-4.5" /> },

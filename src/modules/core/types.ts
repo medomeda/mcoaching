@@ -315,6 +315,16 @@ export interface AppSettings {
   /** PRD §5.2 — le coach consulte ses évaluations. */
   coach_can_view_ratings: boolean;
   email_max_attempts: number;
+  /** Nom de la plateforme affiché aux utilisateurs (interface, e-mails). */
+  brand_name: string;
+  /** Mention affichée aux membres (ex. avertissement propre au domaine) ; absente si vide. */
+  notice_text: string | null;
+  /** Entreprise, coach ou formateur qui propose l'accompagnement, et ses coordonnées publiques (écran de connexion). */
+  organization_name: string | null;
+  organization_description: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  website_url: string | null;
   /** Simulation uniquement : taux d'échec du fournisseur e-mail (0..1). */
   demo_email_failure_rate: number;
   updated_at: ISODate;

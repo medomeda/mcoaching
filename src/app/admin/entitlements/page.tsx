@@ -27,7 +27,7 @@ export default function EntitlementsPage() {
 
   return (
     <>
-      <PageHeader title="Droits et quotas" description="Droit au coaching de chaque apprenant. Le solde est calculé à partir du registre des mouvements." />
+      <PageHeader title="Droits et quotas" description="Droit d’accompagnement de chaque apprenant. Le solde est calculé à partir du registre des mouvements." />
       <Card>
         <div className="flex flex-col gap-2 border-b border-slate-100 p-3 sm:flex-row sm:px-5">
           <div className="relative flex-1">

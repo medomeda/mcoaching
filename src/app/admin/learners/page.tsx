@@ -5,7 +5,7 @@ import { UsersTable } from "@/components/admin/users-table";
 export default function AdminLearnersPage() {
   return (
     <>
-      <PageHeader title="Apprenants" description="Comptes apprenants, coach affecté et statut du droit au coaching." />
+      <PageHeader title="Apprenants" description="Comptes apprenants, coach affecté et statut du droit d’accompagnement." />
       <UsersTable role="LEARNER" />
     </>
   );

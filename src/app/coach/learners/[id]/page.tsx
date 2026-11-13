@@ -20,7 +20,7 @@ export default function CoachLearnerDetail() {
         <CardBody>
           <DescriptionList
             items={[
-              ["Droit au coaching", <Badge key="s" tone={d.entitlement_status === "ACTIVE" ? "success" : "warning"}>{ENTITLEMENT_STATUS_LABELS[d.entitlement_status]}</Badge>],
+              ["Droit d’accompagnement", <Badge key="s" tone={d.entitlement_status === "ACTIVE" ? "success" : "warning"}>{ENTITLEMENT_STATUS_LABELS[d.entitlement_status]}</Badge>],
               ["Quota", d.quota.enabled ? `${d.quota.remaining} restante(s) sur ${(d.quota.limit ?? 0) + d.quota.corrections}` : "Aucune limite"],
             ]}
           />

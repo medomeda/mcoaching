@@ -3,6 +3,8 @@
  * activation et réinitialisation par jeton à usage unique, changement de mot de passe.
  */
 import { z } from "zod";
+import { DEFAULT_BRAND_NAME } from "@/modules/core/branding";
+import { CATEGORY_PACKS, packById } from "@/modules/core/categoryPacks";
 import { AppError, businessRule, validation } from "@/modules/core/errors";
 import { zPassword } from "@/modules/core/password";
 import { zEmail } from "@/modules/core/validation";
@@ -87,6 +89,15 @@ export async function systemStatus() {
     hasUsers: db.users.length > 0,
     demoSeeded: db.meta.demo_seeded,
     activationByEmail: true,
+    brandName: db.app_settings.brand_name ?? DEFAULT_BRAND_NAME,
+    notice: db.app_settings.notice_text ?? null,
+    organization: {
+      name: db.app_settings.organization_name ?? null,
+      description: db.app_settings.organization_description ?? null,
+      contact_email: db.app_settings.contact_email ?? null,
+      contact_phone: db.app_settings.contact_phone ?? null,
+      website_url: db.app_settings.website_url ?? null,
+    },
     now: store().now(db).toISOString(),
   };
 }
@@ -94,7 +105,13 @@ export async function systemStatus() {
 /** Création du premier administrateur, possible uniquement sur une base sans utilisateur. */
 export async function bootstrapAdmin(input: unknown) {
   const data = parse(
-    z.object({ full_name: zText(2, 120, "Le nom"), email: zEmail, password: zPassword }),
+    z.object({
+      full_name: zText(2, 120, "Le nom"),
+      email: zEmail,
+      password: zPassword,
+      brand_name: zText(2, 60, "Le nom de la plateforme").optional(),
+      category_pack: z.enum(CATEGORY_PACKS.map((p) => p.id) as [string, ...string[]]).optional(),
+    }),
     input,
   );
   const pwd = await hashPassword(data.password);
@@ -115,6 +132,11 @@ export async function bootstrapAdmin(input: unknown) {
     };
     db.users.push(user);
     db.credentials.push({ user_id: user.id, password_hash: pwd.hash, salt: pwd.salt, iterations: pwd.iterations, updated_at: iso });
+    if (data.brand_name) db.app_settings = { ...db.app_settings, brand_name: data.brand_name };
+    const pack = data.category_pack ? packById(data.category_pack) : undefined;
+    if (pack) {
+      db.coaching_categories = pack.categories.map(([name, description], i) => ({ id: `cat_${i + 1}`, name, description, is_active: true, sort_order: i + 1, created_at: iso, updated_at: iso }));
+    }
     audit(db, now, { actor_id: user.id, action: "BOOTSTRAP_ADMIN", entity_type: "user", entity_id: user.id, reason: null });
   });
 }

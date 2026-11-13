@@ -1,11 +1,11 @@
-# Suivi du projet — Coaching BRVM (mcoaching)
+# Suivi du projet — Mentora (dépôt « mcoaching »)
 
 Document de référence pour suivre l'avancement. À mettre à jour à chaque étape terminée (section 6).
 Dernière mise à jour : 27/10/2026.
 
 ## 1. Le produit en bref
 
-Plateforme de coaching sur la BRVM avec trois espaces :
+Plateforme d’accompagnement individuel (coachs, formateurs, mentors…, tous domaines) avec trois espaces :
 
 | Espace | Rôle | Usage principal |
 |---|---|---|
@@ -49,6 +49,14 @@ Garanties de cohérence : verrous `SELECT … FOR UPDATE`, verrous consultatifs,
 - **Redirection après connexion** corrigée : l'adresse `?next=` n'est suivie que si elle appartient à l'espace du rôle connecté (avant : page « Accès refusé » fréquente).
 - Liens de notification corrigés vers `/{admin|coach|learner}/notifications`.
 
+### 3.4 Passage à un produit générique : Mentora (étape 1 terminée)
+- Plus aucune référence à la bourse ou à la BRVM dans l'interface, les e-mails, les notifications, les données de démonstration et les tests. « Coaching » devient « accompagnement » (ex. « Droit d'accompagnement »).
+- **Onglet Paramètres → Identité** : nom de la plateforme (interface, onglet du navigateur, e-mails ; par défaut *Mentora*), nom de l'entreprise / du coach / du formateur, présentation courte, e-mail, téléphone et site web (affichés sur l'écran de connexion), et mention facultative aux membres (connexion, menu, formulaire de demande). Le nom se règle aussi à la création de l'espace sur `/setup`.
+- **Catégories** : remplacement de la liste par un modèle (les catégories utilisées par des demandes sont désactivées, jamais supprimées), ajout d'un modèle, création, modification, suppression (refusée si utilisée).
+- **Modèles de catégories** : général, finance et investissement, développement personnel, formation, entrepreneuriat. Choisi à la création de l'espace ; d'autres modèles peuvent être ajoutés ensuite dans Paramètres.
+- Migrations `0006_brand_and_notice` et `0007_organization_identity` (colonnes ajoutées à `app_settings`). Les instances existantes passent au nom *Mentora* et gardent leurs catégories actuelles, à modifier dans Paramètres.
+- Vérifié : typecheck, 53 tests unitaires et d'acceptation, 11 parcours Playwright (mode démo), et un essai sur base jetable (migration, création d'espace avec modèle, changement de nom, titre de l'onglet).
+
 ## 4. Deux modes de fonctionnement
 
 | | Démo | Serveur |
@@ -88,8 +96,17 @@ Pièges connus :
 | 3 | Suite de tests du mode serveur | Les scénarios e2e (45, 63, 55, 54, 37, 44 vérifications) ont tourné depuis un dossier temporaire et ne sont pas dans le dépôt. Les intégrer comme vraie suite (base jetable). | À faire |
 | 4 | Tests Playwright / acceptation | `e2e/journeys.spec.ts` vise le mode démo ; à adapter au mode serveur. | À faire |
 | 5 | Vérification visuelle | Fenêtre du mot de passe provisoire, mise à jour automatique des listes et redirection après connexion : vérifiés par le code et le typecheck, **pas encore dans le navigateur**. | À faire |
-| 6 | Déploiement Coolify | Pile Docker prête et **testée en local** (build, migrations au démarrage, connexion). Guide : [DEPLOIEMENT_COOLIFY.md](DEPLOIEMENT_COOLIFY.md). Reste : premier déploiement réel sur le VPS, vérification du domaine d'envoi d'e-mails, copie hors VPS des sauvegardes (base + pièces jointes). | En cours |
+| 6 | Déploiement Coolify | Deux variantes prêtes et **testées en local** : base indépendante (`docker-compose.yml`, défaut) et tout-en-un (`docker-compose.with-db.yml`). Guide : [DEPLOIEMENT_COOLIFY.md](DEPLOIEMENT_COOLIFY.md). Reste : bascule de l'instance Coolify vers la base indépendante (+ reprise éventuelle des données), sauvegardes S3 de la base et des pièces jointes, domaine d'envoi d'e-mails. | En cours |
 | 7 | Échec ponctuel du test SMTP | Un échec après démarrage à froid du serveur de dev, non reproduit (44/44 au rejeu). Cause non isolée. | À surveiller |
+
+### 6.b Feuille de route produit (SaaS)
+| # | Chantier | Statut |
+|---|---|---|
+| P1 | Produit neutre : nom, mention, catégories par modèle | **Fait** |
+| P2 | **Vocabulaire par espace** (coach/apprenant → formateur/participant, consultant/client…). Non fait : « coach » et « apprenant » restent écrits en dur dans environ 150 textes d'interface, dans les notifications et dans les e-mails, et les accords du français imposent de réécrire chaque phrase. À traiter avec des modèles de vocabulaire. | À faire |
+| P3 | Procédure de mise en service d'un client (une instance par client) | À faire |
+| P4 | Site vitrine, offre et tarifs | À faire |
+| P5 | Multi-client (espaces de travail) quand le seuil est atteint | Plus tard |
 
 ## 7. État de qualité (dernière vérification)
 

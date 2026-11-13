@@ -1,5 +1,5 @@
 /**
- * Demandes de coaching (PRD §6.2, §7, §8, §9.7–9.10) sur PostgreSQL.
+ * Demandes d’accompagnement (PRD §6.2, §7, §8, §9.7–9.10) sur PostgreSQL.
  * Chaque opération : session → rôle → politique d'accès → validation → transaction.
  * Toute écriture verrouille la ligne de la demande (`FOR UPDATE`) : les actions concurrentes
  * sur une même demande sont sérialisées et la machine à états s'applique au statut à jour.
@@ -820,7 +820,7 @@ export async function submitRequest(call: LiveCall, requestId: string, input: un
       recipients: [coach!],
       type: "REQUEST_SUBMITTED",
       title: `Nouvelle demande ${reference}`,
-      summary: `${learner.name} a soumis une nouvelle demande de coaching.`,
+      summary: `${learner.name} a soumis une nouvelle demande d’accompagnement.`,
       requestId: req.id,
       eventKey: `SUBMITTED:${req.id}`,
     });
@@ -1126,7 +1126,7 @@ export async function reassignRequestInTx(tx: Tx, req: ReqRow, newCoachId: strin
   }
   await audit(tx, { actor_id: actorId, action: "REQUEST_REASSIGNED", entity_type: "coaching_request", entity_id: req.id, reason, metadata: { old_coach_id: old?.id ?? null, new_coach_id: coach.id } });
   const at = now.toISOString();
-  await notify(tx, { recipients: [coach], type: "REQUEST_ASSIGNED", title: `Demande ${req.reference} qui vous est confiée`, summary: "Une demande de coaching vous a été réaffectée.", requestId: req.id, eventKey: `REASSIGNED:${req.id}:${at}` });
+  await notify(tx, { recipients: [coach], type: "REQUEST_ASSIGNED", title: `Demande ${req.reference} qui vous est confiée`, summary: "Une demande d’accompagnement vous a été réaffectée.", requestId: req.id, eventKey: `REASSIGNED:${req.id}:${at}` });
   if (old) await notify(tx, { recipients: [old], type: "REASSIGNMENT", title: `Demande ${req.reference} réaffectée`, summary: `Cette demande est désormais suivie par ${coach.name}.`, eventKey: `REASSIGNED_OLD:${req.id}:${at}` });
   await notify(tx, { recipients: [await getUser(tx, req.learnerId)], type: "REASSIGNMENT", title: `Nouveau coach pour ${req.reference}`, summary: `Votre demande est désormais suivie par ${coach.name}.`, requestId: req.id, eventKey: `REASSIGNED_LEARNER:${req.id}:${at}` });
 }

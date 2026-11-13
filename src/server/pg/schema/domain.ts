@@ -167,7 +167,7 @@ export const coachingQuotaLedger = pgTable(
   ],
 );
 
-/* ----------------------------- Demandes de coaching ----------------------------- */
+/* ----------------------------- Demandes d’accompagnement ----------------------------- */
 
 export const coachingCategory = pgTable("coaching_category", {
   id: text().primaryKey(),
@@ -434,6 +434,13 @@ export const appSettings = pgTable("app_settings", {
   learnerFollowUpReopensProcessing: boolean("learner_follow_up_reopens_processing").notNull().default(true),
   coachCanViewRatings: boolean("coach_can_view_ratings").notNull().default(true),
   emailMaxAttempts: integer("email_max_attempts").notNull().default(4),
+  brandName: text("brand_name").notNull().default("Mentora"),
+  noticeText: text("notice_text"),
+  organizationName: text("organization_name"),
+  organizationDescription: text("organization_description"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  websiteUrl: text("website_url"),
   updatedAt: updated(),
   updatedBy: uid("updated_by"),
 });

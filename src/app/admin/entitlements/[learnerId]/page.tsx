@@ -32,7 +32,7 @@ export default function LearnerEntitlementPage() {
     <div className="space-y-4">
       <PageHeader
         back={{ href: "/admin/entitlements", label: "Droits et quotas" }}
-        title={`Droit au coaching — ${d.learner.full_name}`}
+        title={`Droit d’accompagnement — ${d.learner.full_name}`}
         description={
           <Link href={`/admin/users/${d.learner.id}`} className="text-brand-700 hover:underline">
             {d.learner.email}
@@ -183,7 +183,7 @@ function GrantDialog({ learnerId, hasCurrent, onClose }: { learnerId: string; ha
     <Dialog
       open
       onOpenChange={(v) => !v && onClose()}
-      title="Accorder un droit au coaching"
+      title="Accorder un droit d’accompagnement"
       description={hasCurrent ? "Le droit actuel sera conservé dans l’historique et remplacé ; le nouveau quota repart de zéro." : undefined}
       footer={
         <>

@@ -1,5 +1,5 @@
 /**
- * Droits au coaching et quotas (PRD §7.2, §12.3, §12.4).
+ * Droits d’accompagnement et quotas (PRD §7.2, §12.3, §12.4).
  * Le solde n'est jamais un compteur modifiable : il est recalculé depuis le registre.
  */
 import type {
@@ -60,10 +60,10 @@ export type IneligibilityReason =
 
 export const INELIGIBILITY_MESSAGES: Record<IneligibilityReason, string> = {
   ACCOUNT_INACTIVE: "Votre compte n’est pas actif.",
-  NO_ENTITLEMENT: "Aucun droit au coaching ne vous a été attribué. Contactez l’administrateur.",
-  ENTITLEMENT_SUSPENDED: "Votre droit au coaching est suspendu. Vos demandes en cours restent accessibles.",
-  ENTITLEMENT_EXPIRED: "Votre droit au coaching a expiré. Vos demandes en cours restent accessibles.",
-  ENTITLEMENT_NOT_STARTED: "Votre droit au coaching n’a pas encore commencé.",
+  NO_ENTITLEMENT: "Aucun droit d’accompagnement ne vous a été attribué. Contactez l’administrateur.",
+  ENTITLEMENT_SUSPENDED: "Votre droit d’accompagnement est suspendu. Vos demandes en cours restent accessibles.",
+  ENTITLEMENT_EXPIRED: "Votre droit d’accompagnement a expiré. Vos demandes en cours restent accessibles.",
+  ENTITLEMENT_NOT_STARTED: "Votre droit d’accompagnement n’a pas encore commencé.",
   QUOTA_EXHAUSTED: "Vous avez utilisé toutes les demandes prévues par votre quota.",
   NO_COACH: "Aucun coach ne vous est encore affecté. L’administrateur doit procéder à l’affectation.",
   COACH_UNAVAILABLE: "Votre coach n’est pas disponible actuellement. L’administrateur a été informé.",

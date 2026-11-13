@@ -175,7 +175,7 @@ export function processEmails(db: Database, now: Date, s: JobsSummary): void {
       log.sent_at = iso;
       log.error_code = null;
       log.next_attempt_at = null;
-      const mail = renderEmail(log.template_key, log.template_params);
+      const mail = renderEmail(log.template_key, log.template_params, db.app_settings.brand_name);
       db.demo_mailbox.push({ id: newId("mbx"), delivery_id: log.id, to: log.recipient, ...mail, received_at: iso });
       s.emailsSent++;
       continue;

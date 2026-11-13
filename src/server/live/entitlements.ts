@@ -1,5 +1,5 @@
 /**
- * Droits au coaching et registre de quota (PRD §7.2, §9.5) sur PostgreSQL.
+ * Droits d’accompagnement et registre de quota (PRD §7.2, §9.5) sur PostgreSQL.
  * Le registre est append-only ; toute correction exige un motif et un auteur.
  * Les opérations sur un droit verrouillent sa ligne : le solde est recalculé sous verrou.
  */
@@ -176,7 +176,7 @@ export async function grantEntitlement(call: LiveCall, input: unknown) {
   );
   return db.transaction(async (tx) => {
     const learner = await getUser(tx, data.learnerId, { forUpdate: true });
-    if (learner.role !== "LEARNER") throw businessRule("Un droit au coaching ne peut être attribué qu’à un apprenant.");
+    if (learner.role !== "LEARNER") throw businessRule("Un droit d’accompagnement ne peut être attribué qu’à un apprenant.");
     const now = new Date();
     const [previous] = await tx
       .update(coachingEntitlement)
@@ -209,8 +209,8 @@ export async function grantEntitlement(call: LiveCall, input: unknown) {
     await notify(tx, {
       recipients: [learner],
       type: "ACCOUNT",
-      title: "Votre droit au coaching a été mis à jour",
-      summary: "Un droit au coaching vous a été attribué. Consultez votre espace pour en voir le détail.",
+      title: "Votre droit d’accompagnement a été mis à jour",
+      summary: "Un droit d’accompagnement vous a été attribué. Consultez votre espace pour en voir le détail.",
       eventKey: `ENTITLEMENT_GRANTED:${view.id}`,
     });
     return view;
@@ -302,10 +302,10 @@ export async function setEntitlementStatus(call: LiveCall, entitlementId: string
     await notify(tx, {
       recipients: [await getUser(tx, row.learnerId)],
       type: "ACCOUNT",
-      title: data.action === "REACTIVATE" ? "Votre droit au coaching est réactivé" : "Votre droit au coaching a changé",
+      title: data.action === "REACTIVATE" ? "Votre droit d’accompagnement est réactivé" : "Votre droit d’accompagnement a changé",
       summary:
         data.action === "REACTIVATE"
-          ? "Vous pouvez de nouveau soumettre des demandes de coaching."
+          ? "Vous pouvez de nouveau soumettre des demandes d’accompagnement."
           : "Vous ne pouvez plus soumettre de nouvelle demande. Vos demandes en cours restent accessibles.",
       eventKey: `ENTITLEMENT_STATUS:${row.id}:${now.toISOString()}`,
     });

@@ -3,18 +3,14 @@
  * par le PRD (calendrier §7.3, politique §7.4, catégories §12.7, paramètres §21),
  * jamais d'utilisateurs ni de données métier : la démo passe par un seed explicite.
  */
+import { DEFAULT_BRAND_NAME } from "@/modules/core/branding";
+import { DEFAULT_CATEGORY_PACK, packById } from "@/modules/core/categoryPacks";
 import type { Database, ServiceCalendar, ServicePolicy } from "@/modules/core/types";
 
 export const SCHEMA_VERSION = 1;
 export const DEFAULT_CALENDAR_ID = "cal_default";
 
-const DEFAULT_CATEGORIES = [
-  ["Compréhension d’un instrument financier", "Actions, obligations, OPCVM, droits de souscription…"],
-  ["Fonctionnement de la BRVM", "Séances de cotation, ordres, SGI, règlement-livraison."],
-  ["Stratégie d’investissement", "Construction d’une démarche, horizon, diversification."],
-  ["Gestion du risque", "Volatilité, exposition, discipline d’investissement."],
-  ["Questions générales de portefeuille", "Suivi, organisation et lecture de son portefeuille."],
-] as const;
+const DEFAULT_CATEGORIES = packById(DEFAULT_CATEGORY_PACK)!.categories;
 
 export function createEmptyDatabase(nowIso: string): Database {
   const calendar: ServiceCalendar = {
@@ -85,6 +81,13 @@ export function createEmptyDatabase(nowIso: string): Database {
       learner_follow_up_reopens_processing: true,
       coach_can_view_ratings: true,
       email_max_attempts: 4,
+      brand_name: DEFAULT_BRAND_NAME,
+      notice_text: null,
+      organization_name: null,
+      organization_description: null,
+      contact_email: null,
+      contact_phone: null,
+      website_url: null,
       demo_email_failure_rate: 0,
       updated_at: nowIso,
       updated_by: null,

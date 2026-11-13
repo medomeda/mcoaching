@@ -1,4 +1,5 @@
-# Surcharge pour tester la pile en local (Coolify n'en a pas besoin) : publie l'application sur le port 3600.
+# Surcharge pour tester en local (Coolify n'en a pas besoin) : publie l'application sur le port 3600.
+# S'utilise avec docker-compose.yml (base indépendante) ou docker-compose.with-db.yml (tout-en-un).
 services:
   app:
     ports:

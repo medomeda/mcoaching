@@ -1,11 +1,12 @@
 "use client";
 import * as D from "@radix-ui/react-dialog";
 import { clsx } from "clsx";
-import { Bell, ChevronDown, LogOut, Menu, TrendingUp, UserRound, X } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Compass, Menu, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Role } from "@/modules/core/types";
+import { useBranding } from "@/lib/branding";
 import { ROLE_LABELS } from "@/lib/labels";
 import { Avatar, ForbiddenState, Loading } from "@/components/ui/display";
 import { LinkButton } from "@/components/ui/button";
@@ -24,13 +25,14 @@ function isActive(pathname: string, item: NavItem) {
 }
 
 function Brand() {
+  const { name } = useBranding();
   return (
     <Link href="/" className="flex items-center gap-2.5 px-2">
       <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-500 text-white shadow-sm">
-        <TrendingUp className="h-5 w-5" aria-hidden />
+        <Compass className="h-5 w-5" aria-hidden />
       </span>
       <span className="leading-tight">
-        <span className="block text-sm font-semibold text-white">Coaching BRVM</span>
+        <span className="block text-sm font-semibold text-white">{name}</span>
         <span className="block text-[11px] text-brand-200">Accompagnement individuel</span>
       </span>
     </Link>
@@ -104,6 +106,7 @@ function UserMenu({ base }: { base: string }) {
 
 export function AppShell({ role, base, nav, children }: { role: Role; base: string; nav: NavItem[]; children: ReactNode }) {
   const { user, status } = useSession();
+  const brand = useBranding();
   const pathname = usePathname();
   const router = useRouter();
   const [drawer, setDrawer] = useState(false);
@@ -135,7 +138,7 @@ export function AppShell({ role, base, nav, children }: { role: Role; base: stri
         <div className="mt-8 flex-1 overflow-y-auto">
           <NavList items={items} pathname={pathname} />
         </div>
-        <p className="px-3 text-[11px] leading-snug text-brand-300">Plateforme pédagogique : les échanges ne constituent pas des recommandations d’investissement automatisées.</p>
+        {brand.notice && <p className="px-3 text-[11px] leading-snug text-brand-300">{brand.notice}</p>}
       </aside>
 
       <D.Root open={drawer} onOpenChange={setDrawer}>
@@ -161,7 +164,7 @@ export function AppShell({ role, base, nav, children }: { role: Role; base: stri
         <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setDrawer(true)} aria-label="Ouvrir le menu">
           <Menu className="h-5 w-5" />
         </button>
-        <span className="text-sm font-medium text-slate-500 lg:hidden">Coaching BRVM</span>
+        <span className="text-sm font-medium text-slate-500 lg:hidden">{brand.name}</span>
         <div className="flex-1" />
         <Link href={`${base}/notifications`} className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label={`Notifications${unread ? ` (${unread} non lues)` : ""}`}>
           <Bell className="h-5 w-5" />

@@ -14,11 +14,11 @@ VALUES ('pol_initial', 'cal_default', 1440, true, true, 480,
 ON CONFLICT ("id") DO NOTHING;
 --> statement-breakpoint
 INSERT INTO "coaching_category" ("id", "name", "description", "is_active", "sort_order") VALUES
-  ('cat_1', 'Compréhension d’un instrument financier', 'Actions, obligations, OPCVM, droits de souscription…', true, 1),
-  ('cat_2', 'Fonctionnement de la BRVM', 'Séances de cotation, ordres, SGI, règlement-livraison.', true, 2),
-  ('cat_3', 'Stratégie d’investissement', 'Construction d’une démarche, horizon, diversification.', true, 3),
-  ('cat_4', 'Gestion du risque', 'Volatilité, exposition, discipline d’investissement.', true, 4),
-  ('cat_5', 'Questions générales de portefeuille', 'Suivi, organisation et lecture de son portefeuille.', true, 5)
+  ('cat_1', 'Objectifs et plan d’action', 'Clarifier un objectif, le découper en étapes, planifier.', true, 1),
+  ('cat_2', 'Organisation et gestion du temps', 'Priorités, méthode de travail, régularité.', true, 2),
+  ('cat_3', 'Blocages et prise de décision', 'Lever un frein, hésiter entre plusieurs options.', true, 3),
+  ('cat_4', 'Compétences et apprentissage', 'Progresser sur un savoir-faire ou une connaissance.', true, 4),
+  ('cat_5', 'Suivi et bilan', 'Faire le point sur l’avancement et ajuster.', true, 5)
 ON CONFLICT ("id") DO NOTHING;
 --> statement-breakpoint
 INSERT INTO "app_settings" ("id") VALUES ('app') ON CONFLICT ("id") DO NOTHING;

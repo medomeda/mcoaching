@@ -93,8 +93,11 @@ export const liveModules: Record<string, Record<string, LiveFn>> = {
     addHoliday: settings.addHoliday,
     removeHoliday: settings.removeHoliday,
     updateAppSettings: settings.updateAppSettings,
+    updateIdentity: settings.updateIdentity,
     saveCategory: settings.saveCategory,
     moveCategory: settings.moveCategory,
+    applyCategoryPack: settings.applyCategoryPack,
+    deleteCategory: settings.deleteCategory,
   },
   notifications: {
     listMyNotifications: notifications.listMyNotifications,

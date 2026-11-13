@@ -1,4 +1,4 @@
-# Architecture — MVP Coaching individuel BRVM (phase frontend)
+# Architecture — Mentora, plateforme d’accompagnement individuel (phase frontend)
 
 > Phase actuelle : **frontend complet des 3 espaces** (admin, coach, apprenant) branché sur un
 > **backend simulé dans le navigateur**. Les règles métier ne sont pas « maquettées » : elles sont

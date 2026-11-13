@@ -13,10 +13,10 @@ export default function MyEntitlementPage() {
   const e = q.data!.entitlement;
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <PageHeader title="Mon droit au coaching" description="Statut, période de validité et consommation de votre quota." />
+      <PageHeader title="Mon droit d’accompagnement" description="Statut, période de validité et consommation de votre quota." />
       {!e ? (
         <Card>
-          <EmptyState title="Aucun droit attribué" description="Contactez l’administrateur pour bénéficier du coaching individuel." />
+          <EmptyState title="Aucun droit attribué" description="Contactez l’administrateur pour bénéficier de l’accompagnement individuel." />
         </Card>
       ) : (
         <>

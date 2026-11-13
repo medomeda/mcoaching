@@ -1,12 +1,13 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { pgSsl } from "./ssl";
 import * as schema from "./schema";
 
 const globalForPg = globalThis as unknown as { pgPool?: Pool };
 
 function createPool() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL est manquante (voir .env.example).");
-  return new Pool({ connectionString: process.env.DATABASE_URL });
+  return new Pool({ connectionString: process.env.DATABASE_URL, ssl: pgSsl() });
 }
 
 // Une seule réserve de connexions, y compris lors du rechargement à chaud en développement.

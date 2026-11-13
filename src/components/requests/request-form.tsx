@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, Card, CardBody, ErrorState, Loading } from "@/components/ui/display";
 import { Field, FormError, Input, Textarea } from "@/components/ui/form";
 import { api, ApiError, readFiles } from "@/lib/api";
+import { useBranding } from "@/lib/branding";
 import { useApi } from "@/lib/hooks";
 import { fmtDateTime } from "@/lib/format";
 import { AttachmentChips, FilePicker } from "./attachments";
@@ -19,6 +20,7 @@ import { AttachmentChips, FilePicker } from "./attachments";
  */
 export function RequestForm({ draft }: { draft?: RequestDetail }) {
   const router = useRouter();
+  const brand = useBranding();
   const categories = useApi(["categories"], () => api.settings.listCategories());
   const eligibility = useApi(["eligibility"], () => api.requests.myEligibility());
   const [step, setStep] = useState<"edit" | "review">("edit");
@@ -185,7 +187,8 @@ export function RequestForm({ draft }: { draft?: RequestDetail }) {
                 <dd className="text-slate-700">{elig?.coach?.full_name ?? "Aucun coach affecté"}</dd>
               </div>
             </dl>
-            <Alert tone="neutral">Les échanges sont pédagogiques : ils ne constituent pas une recommandation d’investissement personnalisée. Les administrateurs autorisés peuvent consulter les demandes à des fins de supervision.</Alert>
+            {brand.notice && <Alert tone="neutral">{brand.notice}</Alert>}
+            <Alert tone="neutral">Les administrateurs autorisés peuvent consulter les demandes à des fins de supervision.</Alert>
             <FormError message={error} />
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
               <Button variant="ghost" icon={<ArrowLeft className="h-4 w-4" />} onClick={() => setStep("edit")}>

@@ -56,7 +56,7 @@ export default function LoginPage() {
         <CardBody className="space-y-5 p-6 sm:p-7">
           <div>
             <h1 className="text-xl font-semibold text-slate-900">Connexion</h1>
-            <p className="mt-1 text-sm text-slate-500">Accédez à votre espace de coaching.</p>
+            <p className="mt-1 text-sm text-slate-500">Accédez à votre espace d’accompagnement.</p>
           </div>
           {params.get("expired") && <Alert tone="warning">Votre session a expiré. Veuillez vous reconnecter.</Alert>}
           {params.get("reset") && <Alert tone="success">Votre mot de passe a été défini. Vous pouvez vous connecter.</Alert>}

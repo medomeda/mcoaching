@@ -5,6 +5,7 @@
  */
 import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
+import { CATEGORY_PACKS, packById } from "@/modules/core/categoryPacks";
 import { businessRule, conflict, notFound, validation } from "@/modules/core/errors";
 import { parse, zReason, zText } from "@/modules/core/validation";
 import { validateCalendar } from "@/modules/deadlines/businessHours";
@@ -12,7 +13,8 @@ import { isValidTimeZone } from "@/modules/deadlines/zonedTime";
 import { newId } from "../crypto";
 import { SUPPORTED_EXTENSIONS } from "../files/validation";
 import { db } from "../pg/client";
-import { appSettings, coachingCategory, serviceCalendar, serviceHoliday, servicePolicy } from "../pg/schema";
+import { appSettings, coachingCategory, coachingRequest, serviceCalendar, serviceHoliday, servicePolicy } from "../pg/schema";
+import { resetBrandCache } from "./branding";
 import { allCategories, getAppSettings, policyAt } from "./config";
 import { authenticate, type LiveCall } from "./context";
 import { audit, nameIn, namesOf, type Tx } from "./helpers";
@@ -141,6 +143,44 @@ export async function removeHoliday(call: LiveCall, id: string) {
   });
 }
 
+const blankToNull = (v: string | null | undefined) => (v && v.trim() ? v.trim() : null);
+const zIdentity = z.object({
+  brand_name: zText(2, 60, "Le nom de la plateforme"),
+  organization_name: z.string().trim().max(120, "120 caractères maximum.").nullish().transform(blankToNull),
+  organization_description: z.string().trim().max(300, "300 caractères maximum.").nullish().transform(blankToNull),
+  contact_email: z.string().trim().max(254).nullish().transform(blankToNull).pipe(z.string().email("Adresse e-mail invalide.").nullable()),
+  contact_phone: z.string().trim().max(30).regex(/^[+0-9 ()-]*$/, "Numéro de téléphone invalide.").nullish().transform(blankToNull),
+  website_url: z.string().trim().max(200).nullish().transform(blankToNull).pipe(z.string().url("Adresse invalide (ex. https://mon-site.com).").refine((u) => /^https?:\/\//i.test(u), "L’adresse doit commencer par http:// ou https://.").nullable()),
+  notice_text: z.string().trim().max(500, "500 caractères maximum.").nullish().transform(blankToNull),
+  reason: zReason(),
+});
+
+/** Identité de l'espace : plateforme, entreprise / coach / formateur, coordonnées et mention aux membres. */
+export async function updateIdentity(call: LiveCall, input: unknown) {
+  const a = await authenticate(call, "ADMIN");
+  const data = parse(zIdentity, input);
+  await db.transaction(async (tx) => {
+    await tx.select({ id: appSettings.id }).from(appSettings).where(eq(appSettings.id, "app")).for("update");
+    const before = await getAppSettings(tx);
+    await tx
+      .update(appSettings)
+      .set({
+        brandName: data.brand_name,
+        organizationName: data.organization_name,
+        organizationDescription: data.organization_description,
+        contactEmail: data.contact_email,
+        contactPhone: data.contact_phone,
+        websiteUrl: data.website_url,
+        noticeText: data.notice_text,
+        updatedAt: new Date(),
+        updatedBy: a.user.id,
+      })
+      .where(eq(appSettings.id, "app"));
+    await audit(tx, { actor_id: a.user.id, action: "IDENTITY_UPDATED", entity_type: "app_settings", entity_id: null, reason: data.reason, metadata: { before, after: await getAppSettings(tx) } });
+  });
+  resetBrandCache();
+}
+
 export async function updateAppSettings(call: LiveCall, input: unknown) {
   const a = await authenticate(call, "ADMIN");
   const data = parse(
@@ -182,6 +222,7 @@ export async function updateAppSettings(call: LiveCall, input: unknown) {
       metadata: { before, after: await getAppSettings(tx) },
     });
   });
+  resetBrandCache();
 }
 
 const zCategory = z.object({ name: zText(3, 80, "Le nom"), description: z.string().trim().max(300).default(""), is_active: z.boolean().default(true) });
@@ -220,6 +261,84 @@ export async function saveCategory(call: LiveCall, id: string | null, input: unk
     }
     const [active] = await tx.select({ id: coachingCategory.id }).from(coachingCategory).where(eq(coachingCategory.isActive, true)).limit(1);
     if (!active) throw businessRule("Au moins une catégorie doit rester active.");
+  });
+}
+
+/**
+ * Applique un modèle de catégories.
+ * - `add` : ajoute celles qui manquent (nom identique à la casse près = ignoré).
+ * - `replace` : remplace la liste. Les catégories jamais utilisées sont supprimées ; celles qui sont liées à des demandes
+ *   sont désactivées (l'historique est conservé), ou réactivées si le modèle contient la même catégorie.
+ */
+export async function applyCategoryPack(call: LiveCall, input: unknown): Promise<{ added: number; removed: number; deactivated: number }> {
+  const a = await authenticate(call, "ADMIN");
+  const data = parse(z.object({ pack: z.enum(CATEGORY_PACKS.map((p) => p.id) as [string, ...string[]]), mode: z.enum(["add", "replace"]).default("add") }), input);
+  const pack = packById(data.pack)!;
+  return db.transaction(async (tx) => {
+    await lockCategories(tx);
+    const existing = await tx.select().from(coachingCategory).orderBy(asc(coachingCategory.sortOrder), asc(coachingCategory.id));
+    const now = new Date();
+    const lower = (x: string) => x.toLowerCase();
+    if (data.mode === "add") {
+      const known = new Set(existing.map((c) => lower(c.name)));
+      const missing = pack.categories.filter(([name]) => !known.has(lower(name)));
+      let order = existing.length;
+      for (const [name, description] of missing) {
+        const id = newId("cat");
+        await tx.insert(coachingCategory).values({ id, name, description, isActive: true, sortOrder: ++order, createdAt: now, updatedAt: now });
+        await audit(tx, { actor_id: a.user.id, action: "CATEGORY_CREATED", entity_type: "coaching_category", entity_id: id, reason: null, metadata: { name, pack: pack.id } });
+      }
+      return { added: missing.length, removed: 0, deactivated: 0 };
+    }
+    const used = new Set((await tx.selectDistinct({ id: coachingRequest.categoryId }).from(coachingRequest)).map((r) => r.id));
+    const packNames = new Set(pack.categories.map(([n]) => lower(n)));
+    const keptByName = new Map<string, string>();
+    let removed = 0;
+    let deactivated = 0;
+    const leftovers: string[] = [];
+    for (const c of existing) {
+      if (!used.has(c.id)) {
+        await tx.delete(coachingCategory).where(eq(coachingCategory.id, c.id));
+        removed++;
+      } else if (packNames.has(lower(c.name))) {
+        keptByName.set(lower(c.name), c.id);
+      } else {
+        if (c.isActive) deactivated++;
+        leftovers.push(c.id);
+      }
+    }
+    let order = 0;
+    let added = 0;
+    for (const [name, description] of pack.categories) {
+      const keptId = keptByName.get(lower(name));
+      if (keptId) {
+        await tx.update(coachingCategory).set({ description, isActive: true, sortOrder: ++order, updatedAt: now }).where(eq(coachingCategory.id, keptId));
+      } else {
+        await tx.insert(coachingCategory).values({ id: newId("cat"), name, description, isActive: true, sortOrder: ++order, createdAt: now, updatedAt: now });
+        added++;
+      }
+    }
+    for (const id of leftovers) await tx.update(coachingCategory).set({ isActive: false, sortOrder: ++order, updatedAt: now }).where(eq(coachingCategory.id, id));
+    await audit(tx, { actor_id: a.user.id, action: "CATEGORIES_REPLACED", entity_type: "coaching_category", entity_id: null, reason: null, metadata: { pack: pack.id, added, removed, deactivated } });
+    return { added, removed, deactivated };
+  });
+}
+
+/** Suppression d'une catégorie jamais utilisée par une demande (sinon : la désactiver pour conserver l'historique). */
+export async function deleteCategory(call: LiveCall, id: string) {
+  const a = await authenticate(call, "ADMIN");
+  await db.transaction(async (tx) => {
+    await lockCategories(tx);
+    const [c] = await tx.select().from(coachingCategory).where(eq(coachingCategory.id, String(id)));
+    if (!c) throw notFound("Catégorie introuvable.");
+    const n = (await tx.select({ n: sql<number>`count(*)::int` }).from(coachingRequest).where(eq(coachingRequest.categoryId, c.id)))[0]?.n ?? 0;
+    if (n > 0) throw businessRule(`Cette catégorie est utilisée par ${n} demande(s). Désactivez-la plutôt que de la supprimer : l’historique est conservé.`);
+    const [other] = await tx.select({ id: coachingCategory.id }).from(coachingCategory).where(and(eq(coachingCategory.isActive, true), ne(coachingCategory.id, c.id))).limit(1);
+    if (!other) throw businessRule("Au moins une catégorie doit rester active.");
+    await tx.delete(coachingCategory).where(eq(coachingCategory.id, c.id));
+    const rest = await tx.select({ id: coachingCategory.id }).from(coachingCategory).orderBy(asc(coachingCategory.sortOrder), asc(coachingCategory.id));
+    for (const [k, r] of rest.entries()) await tx.update(coachingCategory).set({ sortOrder: k + 1 }).where(eq(coachingCategory.id, r.id));
+    await audit(tx, { actor_id: a.user.id, action: "CATEGORY_DELETED", entity_type: "coaching_category", entity_id: c.id, reason: null, metadata: { name: c.name } });
   });
 }
 

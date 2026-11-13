@@ -1,5 +1,7 @@
 # PRD — Plateforme de gestion du coaching individuel BRVM
 
+> **Note (novembre 2026).** Ce PRD a été rédigé pour un premier contexte : une communauté d’investissement sur la BRVM. Le produit s’appelle désormais **Mentora** et s’adresse à tout domaine d’accompagnement individuel. Les mentions de la bourse et de la BRVM ci-dessous sont historiques : dans l’application, le nom, les catégories de demandes et la mention affichée aux membres sont des paramètres de chaque espace. Les règles métier restent inchangées.
+
 **Version :** 1.0  
 **Date :** 26 octobre 2026  
 **Statut :** Document de référence pour le développement du MVP  

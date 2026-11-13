@@ -26,7 +26,7 @@ export default function LearnerHome() {
     <div className="space-y-5">
       <PageHeader
         title={`Bonjour ${user?.full_name.split(" ")[0] ?? ""}`}
-        description="Retrouvez vos demandes de coaching et vos échanges avec votre coach."
+        description="Retrouvez vos demandes d’accompagnement et vos échanges avec votre coach."
         actions={
           e.ok ? (
             <LinkButton href="/learner/requests/new" icon={<FilePlus2 className="h-4 w-4" />}>
@@ -64,7 +64,7 @@ export default function LearnerHome() {
           </CardBody>
         </Card>
         <Card>
-          <CardHeader title="Droit au coaching" icon={<ShieldCheck className="h-4 w-4" />} />
+          <CardHeader title="Droit d’accompagnement" icon={<ShieldCheck className="h-4 w-4" />} />
           <CardBody className="space-y-1">
             <Badge tone={status === "ACTIVE" ? "success" : status === "NONE" ? "neutral" : "warning"}>{ENTITLEMENT_STATUS_LABELS[status]}</Badge>
             {e.entitlement?.expires_at && <p className="text-xs text-slate-500">Valable jusqu’au {fmtDate(e.entitlement.expires_at)}</p>}

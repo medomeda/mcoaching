@@ -393,3 +393,82 @@ describe("Authentification", () => {
     await expectCode(auth.bootstrapAdmin({ full_name: "Intrus", email: "intrus@test.example", password: PASSWORD }), "BUSINESS_RULE");
   });
 });
+
+describe("Identité de la plateforme et modèles de catégories", () => {
+  it("la création de l’espace applique le nom et le modèle de catégories choisis", async () => {
+    await auth.bootstrapAdmin({ full_name: "Admin Test", email: "admin@test.example", password: PASSWORD, brand_name: "Cabinet Horizon", category_pack: "entrepreneuriat" });
+    const status = await auth.systemStatus();
+    expect(status.brandName).toBe("Cabinet Horizon");
+    const names = env.db().coaching_categories.map((c) => c.name);
+    expect(names).toHaveLength(5);
+    expect(names).toContain("Vente et marketing");
+    expect(names.join(" ")).not.toMatch(/BRVM|bourse/i);
+  });
+
+  it("par défaut : nom Mentora et catégories générales, sans référence à la bourse", async () => {
+    await auth.bootstrapAdmin({ full_name: "Admin Test", email: "admin@test.example", password: PASSWORD });
+    expect((await auth.systemStatus()).brandName).toBe("Mentora");
+    const names = env.db().coaching_categories.map((c) => c.name).join(" ");
+    expect(names).toContain("Objectifs et plan d’action");
+    expect(names).not.toMatch(/BRVM|bourse|investissement/i);
+  });
+
+  it("l’administrateur modifie l’identité (plateforme, entreprise, contact, mention) ; un coach ne le peut pas", async () => {
+    const s = await standardSetup(env);
+    const base = { brand_name: "Cabinet Horizon", organization_name: "Awa Traoré Coaching", organization_description: "Accompagnement individuel en développement professionnel.", contact_email: "Contact@Horizon.example", contact_phone: "+225 07 00 00 00 00", website_url: "https://horizon.example", notice_text: "Les échanges sont pédagogiques.", reason: "Personnalisation" };
+    await expectCode(settings.updateIdentity(s.coach, base), "FORBIDDEN");
+    await settings.updateIdentity(s.admin, base);
+    let status = await auth.systemStatus();
+    expect(status.brandName).toBe("Cabinet Horizon");
+    expect(status.notice).toBe("Les échanges sont pédagogiques.");
+    expect(status.organization).toMatchObject({ name: "Awa Traoré Coaching", contact_email: "Contact@Horizon.example", contact_phone: "+225 07 00 00 00 00", website_url: "https://horizon.example" });
+    await settings.updateIdentity(s.admin, { ...base, organization_name: "  ", organization_description: "", contact_email: "", contact_phone: "", website_url: "", notice_text: "   " });
+    status = await auth.systemStatus();
+    expect(status.notice).toBeNull();
+    expect(status.organization).toEqual({ name: null, description: null, contact_email: null, contact_phone: null, website_url: null });
+  });
+
+  it("l’identité rejette un e-mail, un téléphone ou un site invalides", async () => {
+    const s = await standardSetup(env);
+    const base = { brand_name: "Mentora", organization_name: null, organization_description: null, contact_email: null, contact_phone: null, website_url: null, notice_text: null, reason: "Contrôle" };
+    for (const bad of [{ contact_email: "pas-un-email" }, { contact_phone: "abc" }, { website_url: "horizon.example" }, { website_url: "javascript:alert(1)" }]) {
+      await expectCode(settings.updateIdentity(s.admin, { ...base, ...bad }), "VALIDATION");
+    }
+  });
+
+  it("ajouter un modèle de catégories n’ajoute que les catégories manquantes", async () => {
+    const s = await standardSetup(env);
+    const before = env.db().coaching_categories.length;
+    expect((await settings.applyCategoryPack(s.admin, { pack: "developpement" })).added).toBe(5);
+    expect(env.db().coaching_categories).toHaveLength(before + 5);
+    expect((await settings.applyCategoryPack(s.admin, { pack: "developpement" })).added).toBe(0);
+    await expectCode(settings.applyCategoryPack(s.learner, { pack: "finance" }), "FORBIDDEN");
+  });
+
+  it("remplacer par un modèle : supprime les catégories inutilisées, désactive celles qui ont des demandes", async () => {
+    const s = await standardSetup(env);
+    await submitNew(s.learner, s.categoryId); // la catégorie de test est désormais utilisée
+    const usedName = env.db().coaching_categories.find((c) => c.id === s.categoryId)!.name;
+    const r = await settings.applyCategoryPack(s.admin, { pack: "finance", mode: "replace" });
+    const cats = env.db().coaching_categories;
+    expect(r.added).toBe(5);
+    expect(cats.filter((c) => c.is_active).map((c) => c.name)).toHaveLength(5);
+    expect(cats.filter((c) => c.is_active).map((c) => c.name)).toContain("Gestion du risque");
+    const old = cats.find((c) => c.id === s.categoryId)!;
+    expect(old.name).toBe(usedName);
+    expect(old.is_active).toBe(false); // conservée pour l’historique des demandes
+    expect(cats.some((c) => c.name === "Suivi et bilan")).toBe(false); // jamais utilisée : supprimée
+    expect(cats.map((c) => c.sort_order)).toEqual(cats.map((_, i) => i + 1).sort((x, y) => x - y).slice(0, cats.length));
+  });
+
+  it("supprimer une catégorie : refusé si elle est utilisée ou si c’est la dernière active", async () => {
+    const s = await standardSetup(env);
+    await settings.saveCategory(s.admin, null, { name: "Catégorie jetable", description: "", is_active: true });
+    const spare = env.db().coaching_categories.find((c) => c.name === "Catégorie jetable")!;
+    await settings.deleteCategory(s.admin, spare.id);
+    expect(env.db().coaching_categories.some((c) => c.id === spare.id)).toBe(false);
+    await submitNew(s.learner, s.categoryId);
+    await expectCode(settings.deleteCategory(s.admin, s.categoryId), "BUSINESS_RULE");
+    await expectCode(settings.deleteCategory(s.learner, s.categoryId), "FORBIDDEN");
+  });
+});

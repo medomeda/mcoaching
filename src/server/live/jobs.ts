@@ -222,7 +222,8 @@ export async function processEmails(_runStart: Date, s: JobsSummary): Promise<vo
   // Heure relue ici, et non celle du début de l'exécution : les e-mails des notifications créées
   // par les étapes précédentes de la même exécution sont ainsi envoyés tout de suite.
   const now = new Date();
-  const max = (await getAppSettings(db)).email_max_attempts;
+  const appSettingsNow = await getAppSettings(db);
+  const max = appSettingsNow.email_max_attempts;
   const baseUrl = appUrl();
   for (let i = 0; i < EMAIL_BATCH; i++) {
     const done = await db.transaction(async (tx) => {
@@ -241,7 +242,7 @@ export async function processEmails(_runStart: Date, s: JobsSummary): Promise<vo
       if (!log) return true;
 
       const params = log.templateParams;
-      const mail = renderEmail(log.templateKey, params);
+      const mail = renderEmail(log.templateKey, params, appSettingsNow.brand_name);
       const result = await sendEmail({ to: log.recipient, ...mail, link: mail.link ? `${baseUrl}${mail.link}` : null });
       const at = new Date();
       const attempts = log.attemptCount + 1;

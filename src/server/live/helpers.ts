@@ -6,6 +6,7 @@ import { isOpen } from "@/modules/requests/stateMachine";
 import type { PublicUser } from "../api/auth";
 import { newId, randomToken, sha256 } from "../crypto";
 import { renderEmail } from "../mail/templates";
+import { getBrandName } from "./branding";
 import { sendEmail } from "../mail/sender";
 import { db, type Db } from "../pg/client";
 import { auditLog, emailDeliveryLog, notification, notificationEvent, user, verification } from "../pg/schema";
@@ -180,7 +181,7 @@ export async function sendTransactionalEmail(
   link: string,
 ): Promise<void> {
   const now = new Date();
-  const result = await sendEmail({ to: u.email, ...renderEmail(template, { name: u.name, link }) });
+  const result = await sendEmail({ to: u.email, ...renderEmail(template, { name: u.name, link }, await getBrandName()) });
   await db
     .insert(emailDeliveryLog)
     .values({
