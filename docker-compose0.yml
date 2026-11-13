@@ -1,0 +1,50 @@
+# Déploiement Coolify (build pack « Docker Compose ») : application seule, avec une base PostgreSQL INDÉPENDANTE
+# (ex. ressource PostgreSQL de Coolify). Voir docs/DEPLOIEMENT_COOLIFY.md.
+# Variante tout-en-un (base + sauvegardes dans ce déploiement) : docker-compose.with-db.yml.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        NEXT_PUBLIC_DEMO_MODE: "false"
+    restart: unless-stopped
+    # Pas de « ports » : le proxy de Coolify joint le conteneur sur le réseau interne (domaine à renseigner dans l'interface).
+    expose:
+      - "3600"
+    environment:
+      # Coolify route le domaine du service « app » vers le port 3600 (valeur générée, modifiable dans l'interface).
+      SERVICE_URL_APP_3600: /
+      # URL de connexion de la base indépendante, à saisir dans Coolify (mot de passe encodé : @ → %40, ! → %21, # → %23).
+      DATABASE_URL: ${DATABASE_URL}
+      # Vide (défaut : base interne à Coolify, sans SSL) | require (certificat vérifié) | no-verify (certificat auto-signé accepté) | disable.
+      DATABASE_SSL: ${DATABASE_SSL:-}
+      # Secret BetterAuth généré une fois par Coolify. Ne jamais le changer : toutes les sessions seraient invalidées.
+      AUTH_SECRET: ${SERVICE_HEX_64_AUTHSECRET}
+      # Adresse publique EXACTE (https://votre-domaine, sans barre finale) : liens des e-mails, cookies, contrôle d'origine.
+      APP_URL: ${APP_URL:-${SERVICE_URL_APP_3600}}
+      # Autres adresses acceptées (ex. https://www.mondomaine.com), séparées par des virgules.
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Africa/Abidjan}
+      ACTIVATION_BY_EMAIL: ${ACTIVATION_BY_EMAIL:-false}
+      # Une seule instance : le planificateur intégré (échéances, e-mails) reste actif.
+      DISABLE_SCHEDULER: ${DISABLE_SCHEDULER:-false}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    volumes:
+      - storage-data:/data/storage
+    healthcheck:
+      # Teste aussi la connexion à la base : l'application n'est « healthy » que si la base répond.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3600/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+volumes:
+  storage-data:
