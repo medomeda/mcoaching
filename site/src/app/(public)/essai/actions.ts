@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { db } from "@/db/client";
+import { safeLogMessage } from "@/server/errors";
 import { processTrial, trialLimiter, type TrialResult } from "@/lib/trial";
 
 export async function submitTrial(_prev: TrialResult | null, formData: FormData): Promise<TrialResult> {
@@ -10,7 +11,7 @@ export async function submitTrial(_prev: TrialResult | null, formData: FormData)
   try {
     return await processTrial(db, Object.fromEntries(formData), ip, trialLimiter);
   } catch (e) {
-    console.error("[essai]", e instanceof Error ? e.message : "erreur");
+    console.error("[essai]", safeLogMessage(e));
     return { ok: false, fieldErrors: { _form: "Une erreur est survenue. Réessayez dans un instant." }, values: Object.fromEntries([...formData].filter(([, v]) => typeof v === "string")) as Record<string, string> };
   }
 }

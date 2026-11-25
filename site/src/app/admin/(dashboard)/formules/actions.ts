@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
+import { userMessage } from "@/server/errors";
 import { guard } from "@/server/guard";
 import { defaultDeps, planFromForm, reorderPlans, savePlan, setPublished } from "@/server/plans-admin";
 
@@ -10,7 +11,7 @@ export async function savePlanAction(formData: FormData) {
   try {
     await savePlan(planFromForm(formData), defaultDeps(db));
   } catch (e) {
-    redirect(`/admin/formules?erreur=${encodeURIComponent(e instanceof Error ? "Données invalides : vérifiez les champs." : "Erreur")}`);
+    redirect(`/admin/formules?erreur=${encodeURIComponent(userMessage(e))}`);
   }
   redirect("/admin/formules");
 }

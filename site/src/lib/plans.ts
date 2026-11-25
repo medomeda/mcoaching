@@ -54,9 +54,9 @@ export function limitLabel(n: number | null, noun: string): string {
   return `${n} ${noun}`;
 }
 
-/** Prix annuel : valeur saisie, sinon mensuel × 12 moins la remise, sinon null. */
+/** Prix annuel : valeur saisie, sinon mensuel × 12 moins la remise (seulement si une remise est configurée), sinon null : aucun prix non saisi n'est publié. */
 export function annualPriceOf(p: Pick<PublicPlan, "monthlyPrice" | "annualPrice" | "annualDiscountPercent">): number | null {
   if (p.annualPrice !== null) return p.annualPrice;
-  if (p.monthlyPrice === null) return null;
+  if (p.monthlyPrice === null || p.annualDiscountPercent <= 0) return null;
   return Math.round(p.monthlyPrice * 12 * (1 - p.annualDiscountPercent / 100));
 }

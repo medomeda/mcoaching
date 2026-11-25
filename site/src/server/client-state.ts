@@ -1,4 +1,4 @@
-import { desc, eq, inArray, sql } from "drizzle-orm";
+import { desc, eq, gte, sql } from "drizzle-orm";
 import type { SiteDb } from "@/db/client";
 import { client, healthCheck, plan, prospect, usageSnapshot } from "@/db/schema";
 import { offlineSince, type ClientState } from "@/lib/alerts";
@@ -6,11 +6,11 @@ import { offlineSince, type ClientState } from "@/lib/alerts";
 /** États des clients (santé récente + dernier relevé d'usage) pour les alertes et les listes. */
 export async function loadClientStates(db: SiteDb, now = new Date()) {
   const clients = await db.select().from(client);
-  const ids = clients.map((c) => c.id);
   const since = new Date(now.getTime() - 24 * 3_600_000);
-  const checks = ids.length ? await db.select().from(healthCheck).where(inArray(healthCheck.clientId, ids)).orderBy(desc(healthCheck.checkedAt)) : [];
-  const snaps = ids.length ? await db.select().from(usageSnapshot).where(inArray(usageSnapshot.clientId, ids)).orderBy(desc(usageSnapshot.day)) : [];
-  const recentChecks = checks.filter((c) => c.checkedAt >= since);
+  // Filtrage et « dernier par client » faits en SQL : l'historique complet (des milliers de lignes par client) n'est jamais chargé.
+  const recentChecks = await db.select().from(healthCheck).where(gte(healthCheck.checkedAt, since)).orderBy(desc(healthCheck.checkedAt));
+  const lastChecks = await db.selectDistinctOn([healthCheck.clientId]).from(healthCheck).orderBy(healthCheck.clientId, desc(healthCheck.checkedAt));
+  const snaps = await db.selectDistinctOn([usageSnapshot.clientId]).from(usageSnapshot).orderBy(usageSnapshot.clientId, desc(usageSnapshot.day));
   const states: ClientState[] = clients.map((c) => {
     const mine = recentChecks.filter((h) => h.clientId === c.id);
     const snap = snaps.find((s) => s.clientId === c.id);
@@ -21,8 +21,7 @@ export async function loadClientStates(db: SiteDb, now = new Date()) {
       usage: k ? { suspended: !!k.suspended, coaches_active: k.coaches_active ?? 0, members_active: k.members_active ?? 0, last_activity_at: k.last_activity_at ?? null } : null,
     };
   });
-  const lastCheck = new Map<string, { ok: boolean; at: Date }>();
-  for (const h of checks) if (!lastCheck.has(h.clientId)) lastCheck.set(h.clientId, { ok: h.ok, at: h.checkedAt });
+  const lastCheck = new Map(lastChecks.map((h) => [h.clientId, { ok: h.ok, at: h.checkedAt }]));
   const plans = new Map((await db.select().from(plan)).map((p) => [p.id, { maxCoaches: p.maxCoaches, maxMembers: p.maxMembers }]));
   const [{ n } = { n: 0 }] = await db.select({ n: sql<number>`count(*)::int` }).from(prospect).where(eq(prospect.status, "NOUVEAU"));
   return { states, lastCheck, plans, newProspects: n };

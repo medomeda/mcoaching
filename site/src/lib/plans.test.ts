@@ -22,6 +22,9 @@ describe("annualPriceOf", () => {
   it("préfère le prix annuel saisi", () => {
     expect(annualPriceOf({ ...base, annualPrice: 90000 })).toBe(90000);
   });
+  it("sans remise ni prix annuel saisi, aucun prix annuel n'est inventé", () => {
+    expect(annualPriceOf({ monthlyPrice: 10000, annualPrice: null, annualDiscountPercent: 0 })).toBeNull();
+  });
   it("renvoie null sans aucun prix", () => {
     expect(annualPriceOf({ monthlyPrice: null, annualPrice: null, annualDiscountPercent: 20 })).toBeNull();
   });

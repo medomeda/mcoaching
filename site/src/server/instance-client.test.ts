@@ -74,6 +74,27 @@ describe("INSTANCE_CONNECT_OVERRIDES (tests de bout en bout uniquement)", () => 
   });
 });
 
+describe("INSTANCE_CONNECT_OVERRIDES : garde-fous", () => {
+  it("ignore une destination qui n'est pas locale (clés jamais envoyées en clair ailleurs)", async () => {
+    process.env.INSTANCE_CONNECT_OVERRIDES = JSON.stringify({ "acme.mentora.app": "http://evil.example" });
+    try {
+      // Si l'override était appliqué, la requête partirait vers evil.example ; sinon vers acme.mentora.app (injoignable ici).
+      const seenUrls: string[] = [];
+      const orig = globalThis.fetch;
+      globalThis.fetch = (async (u: URL | string) => { seenUrls.push(String(u)); throw new Error("stop"); }) as typeof fetch;
+      try {
+        await fetchHealth(new URL("https://acme.mentora.app"), { timeoutMs: 200 });
+      } finally {
+        globalThis.fetch = orig;
+      }
+      expect(seenUrls[0]).toContain("acme.mentora.app");
+      expect(seenUrls[0]).not.toContain("evil.example");
+    } finally {
+      delete process.env.INSTANCE_CONNECT_OVERRIDES;
+    }
+  });
+});
+
 describe("setInstanceSuspension", () => {
   it("envoie la clé en en-tête et le corps attendu", async () => {
     seen.length = 0;

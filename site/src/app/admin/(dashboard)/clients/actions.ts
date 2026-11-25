@@ -10,6 +10,7 @@ import { client as clientTable } from "@/db/schema";
 import { decryptSecret } from "@/lib/secret-box";
 import { instanceTarget } from "@/lib/instance-url";
 import { fetchHealth, fetchUsage, setInstanceSuspension, type HealthResult, type InstanceUsage } from "@/server/instance-client";
+import { userMessage } from "@/server/errors";
 import { guard } from "@/server/guard";
 
 export type CreateState = { ok: true; clientId: string; instanceKey: string } | { ok: false; error: string } | null;
@@ -29,7 +30,7 @@ export async function createClientAction(_prev: CreateState, f: FormData): Promi
     // La clé n'est renvoyée qu'ici, une seule fois : elle n'est ni redirigée dans l'adresse ni journalisée.
     return { ok: true, clientId: r.client.id, instanceKey: r.instanceKey };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Création impossible." };
+    return { ok: false, error: userMessage(e) };
   }
 }
 
@@ -38,7 +39,7 @@ export async function rotateKeyAction(_prev: { key?: string; error?: string } | 
   try {
     return { key: await rotateInstanceKey(String(f.get("id")), { db, masterKey: loadMasterKey() }) };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Échec." };
+    return { error: userMessage(e) };
   }
 }
 
@@ -48,7 +49,7 @@ export async function paymentAction(f: FormData) {
   try {
     await recordPayment(id, { paidOn: text(f, "paidOn"), amount: text(f, "amount"), method: text(f, "method") ?? "", note: text(f, "note") ?? "" }, db);
   } catch (e) {
-    redirect(`/admin/clients/${id}?erreur=${encodeURIComponent(e instanceof Error ? e.message : "Paiement invalide.")}`);
+    redirect(`/admin/clients/${id}?erreur=${encodeURIComponent(userMessage(e))}`);
   }
   redirect(`/admin/clients/${id}`);
 }
@@ -61,7 +62,7 @@ export async function statusAction(f: FormData) {
   try {
     await setClientStatus(id, status as (typeof CLIENT_STATUSES)[number], db);
   } catch (e) {
-    redirect(`/admin/clients/${id}?erreur=${encodeURIComponent(e instanceof Error ? e.message : "Statut invalide.")}`);
+    redirect(`/admin/clients/${id}?erreur=${encodeURIComponent(userMessage(e))}`);
   }
   redirect(`/admin/clients/${id}`);
 }

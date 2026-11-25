@@ -40,8 +40,11 @@ function connectOrigin(url: URL): string {
   const raw = process.env.INSTANCE_CONNECT_OVERRIDES;
   if (!raw) return url.origin;
   try {
-    const map = JSON.parse(raw) as Record<string, string>;
-    return map[url.hostname] ?? url.origin;
+    const target = (JSON.parse(raw) as Record<string, string>)[url.hostname];
+    if (!target) return url.origin;
+    // Uniquement une destination locale : jamais de clé en clair vers une autre machine, même si la variable est mal posée.
+    const t = new URL(target);
+    return ["127.0.0.1", "localhost", "[::1]"].includes(t.hostname) ? t.origin : url.origin;
   } catch {
     return url.origin;
   }
