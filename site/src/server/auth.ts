@@ -58,6 +58,19 @@ export function createAuth(database: AuthDb, opts: AuthOptions = {}) {
     await database.insert(auditLog).values({ action: "LOGIN_LOCKED", target: email });
   }
 
+  /** Clé de verrouillage : l'adresse saisie (connexion) ; pour le second facteur, l'unique compte opérateur. */
+  async function lockKeyOf(path: string, body: unknown): Promise<string | null> {
+    if (path === "/sign-in/email") {
+      const email = (body as { email?: unknown } | undefined)?.email;
+      return typeof email === "string" ? norm(email) : null;
+    }
+    if (path === "/two-factor/verify-totp" || path === "/two-factor/verify-backup-code") {
+      const [u] = await database.select({ email: schema.user.email }).from(schema.user).limit(1);
+      return u ? norm(u.email) : null;
+    }
+    return null;
+  }
+
   const baseURL = opts.baseURL ?? adminBaseUrl();
 
   return betterAuth({
@@ -77,20 +90,24 @@ export function createAuth(database: AuthDb, opts: AuthOptions = {}) {
     },
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
-        if (ctx.path !== "/sign-in/email") return;
-        const email = (ctx.body as { email?: unknown } | undefined)?.email;
-        if (typeof email === "string") await assertNotLocked(norm(email));
+        const email = await lockKeyOf(ctx.path, ctx.body);
+        if (email) await assertNotLocked(email);
       }),
       after: createAuthMiddleware(async (ctx) => {
-        if (ctx.path !== "/sign-in/email") return;
-        const email = (ctx.body as { email?: unknown } | undefined)?.email;
-        if (typeof email !== "string") return;
+        const email = await lockKeyOf(ctx.path, ctx.body);
+        if (!email) return;
         const returned = ctx.context.returned;
         if (returned instanceof APIError) {
-          if (returned.statusCode === 401 || returned.statusCode === 400) await recordFailure(norm(email));
-        } else {
-          await database.delete(loginAttempt).where(eq(loginAttempt.email, norm(email)));
+          if (returned.statusCode === 401 || returned.statusCode === 400) await recordFailure(email);
+          return;
         }
+        // Mot de passe juste mais second facteur encore à fournir : ce n'est pas une connexion réussie,
+        // le compteur n'est remis à zéro qu'une fois la session complète délivrée.
+        if (ctx.path === "/sign-in/email") {
+          const [u] = await database.select({ tf: schema.user.twoFactorEnabled }).from(schema.user).where(eq(schema.user.email, email));
+          if (u?.tf) return;
+        }
+        await database.delete(loginAttempt).where(eq(loginAttempt.email, email));
       }),
     },
     plugins: [twoFactor({ issuer: "Mentora (opérateur)", backupCodeOptions: { amount: 10 } }), nextCookies()],

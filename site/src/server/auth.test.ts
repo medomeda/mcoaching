@@ -86,3 +86,28 @@ describe("adminBaseUrl", () => {
     expect(adminBaseUrl(undefined, "https://mentora.app")).toBeUndefined();
   });
 });
+
+describe("second facteur : verrouillage", () => {
+  it("des échecs répétés du code TOTP verrouillent le compte, et une connexion par mot de passe seul ne remet pas le compteur à zéro", async () => {
+    const { codeFromUri } = await import("@/test/totp");
+    await withTestDb(async (db) => {
+      const a = mk(db);
+      await createOperator(a, db, { email: "op@mentora.app", password: PASSWORD });
+      const h0 = await cookieFor(a, "op@mentora.app");
+      const en = await a.api.enableTwoFactor({ body: { password: PASSWORD }, headers: h0 });
+      if (!("totpURI" in en)) throw new Error("TOTP attendu");
+      await a.api.verifyTOTP({ body: { code: await codeFromUri(en.totpURI) }, headers: h0 });
+      let locked = false;
+      for (let i = 0; i < MAX_LOGIN_FAILURES + 3 && !locked; i++) {
+        const r = await a.api.signInEmail({ body: { email: "op@mentora.app", password: PASSWORD }, asResponse: true }).catch(() => null);
+        if (!r) { locked = true; break; }
+        const h = new Headers({ cookie: r.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ") });
+        await a.api.verifyTOTP({ body: { code: "000000" }, headers: h }).catch((e: Error) => { if (/tentatives/i.test(e.message)) locked = true; });
+      }
+      expect(locked).toBe(true);
+      // Même avec le bon code, tant que le verrou est actif.
+      const r = await a.api.signInEmail({ body: { email: "op@mentora.app", password: PASSWORD } }).catch((e: Error) => e);
+      expect(r instanceof Error && /tentatives/i.test(r.message)).toBe(true);
+    });
+  });
+});
