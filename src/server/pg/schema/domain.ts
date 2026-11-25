@@ -441,6 +441,9 @@ export const appSettings = pgTable("app_settings", {
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   websiteUrl: text("website_url"),
+  /** Suspension de l'instance par l'opérateur (abonnement impayé…) : aucune donnée n'est supprimée. */
+  suspended: boolean("suspended").notNull().default(false),
+  suspensionMessage: text("suspension_message"),
   updatedAt: updated(),
   updatedBy: uid("updated_by"),
 });

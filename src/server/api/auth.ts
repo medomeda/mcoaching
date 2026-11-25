@@ -90,6 +90,8 @@ export async function systemStatus() {
     demoSeeded: db.meta.demo_seeded,
     activationByEmail: true,
     brandName: db.app_settings.brand_name ?? DEFAULT_BRAND_NAME,
+    suspended: false,
+    suspensionMessage: null as string | null,
     notice: db.app_settings.notice_text ?? null,
     organization: {
       name: db.app_settings.organization_name ?? null,

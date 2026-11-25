@@ -10,6 +10,7 @@ import type { Actor } from "@/modules/permissions/policies";
 import { auth } from "../auth";
 import { db } from "../pg/client";
 import { user } from "../pg/schema";
+import { getSuspension } from "../ops/usage";
 import { toPublicUser, type UserRowDb } from "./helpers";
 
 export interface LiveCall {
@@ -23,6 +24,9 @@ export interface LiveAuthed {
 }
 
 export async function authenticate(call: LiveCall, ...roles: Role[]): Promise<LiveAuthed> {
+  // Instance suspendue par l'opérateur : tout appel authentifié reçoit le message de suspension.
+  const susp = await getSuspension();
+  if (susp.suspended) throw new AppError("SERVICE_SUSPENDED", susp.message ?? "Cet espace est suspendu.");
   const s = await auth.api.getSession({ headers: call.headers });
   if (!s) throw new AppError("UNAUTHENTICATED", "Veuillez vous connecter.");
   const [u] = await db.select().from(user).where(eq(user.id, s.user.id));

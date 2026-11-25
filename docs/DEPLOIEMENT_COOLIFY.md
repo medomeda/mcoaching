@@ -65,6 +65,8 @@ Pour une base **sur un autre serveur ou un service géré** : `DATABASE_URL` ave
 | `DATABASE_SSL` *(mode A, optionnelle)* | vide, `require`, `no-verify` ou `disable` | Vide pour une base interne à Coolify. `require` pour une base distante avec SSL. |
 | `APP_URL` | `https://coaching.mondomaine.com` | Adresse publique **exacte**, sans `/` final. Liens des e-mails, cookies, contrôle d'origine. |
 | `TRUSTED_ORIGINS` | vide ou `https://www.mondomaine.com` | Autres adresses autorisées, séparées par des virgules. |
+| `OPS_API_KEY` | vide, ou la clé générée par le tableau de bord de l'opérateur (Mentora SaaS) | Active `GET /api/ops/usage` (compteurs d'usage uniquement, jamais de contenu) et `POST /api/ops/suspension`. Vide : ces adresses répondent 404. Une clé par instance. |
+| `APP_VERSION` | vide ou ex. `1.4.0` | Version affichée dans le tableau de bord de l'opérateur (par défaut : version du `package.json`). |
 | `ACTIVATION_BY_EMAIL` | `false`, puis `true` quand le SMTP livre | `false` : compte actif d'emblée + mot de passe provisoire donné à l'administrateur. |
 | `EMAIL_PROVIDER` | `smtp` (ou vide) | Vide : e-mails écrits dans les journaux seulement. |
 | `EMAIL_FROM` | `Mentora <no-reply@mondomaine.com>` | Domaine **vérifié** chez le fournisseur SMTP. |

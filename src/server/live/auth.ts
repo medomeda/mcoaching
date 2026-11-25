@@ -12,6 +12,7 @@ import { AppError, businessRule, validation } from "@/modules/core/errors";
 import { zPassword } from "@/modules/core/password";
 import { parse, zEmail, zPhone, zText } from "@/modules/core/validation";
 import { auth } from "../auth";
+import { getSuspension } from "../ops/usage";
 import { newId } from "../crypto";
 import { db } from "../pg/client";
 import { appSettings, coachingCategory, session, user, verification } from "../pg/schema";
@@ -28,11 +29,14 @@ const zToken = z.string().min(10).max(200);
 export async function systemStatus(_call: LiveCall) {
   const n = (await db.select({ n: count() }).from(user))[0]?.n ?? 0;
   const s = await getAppSettings(db);
+  const susp = await getSuspension();
   return {
     hasUsers: n > 0,
     demoSeeded: false,
     activationByEmail: activationByEmail(),
     brandName: s.brand_name,
+    suspended: susp.suspended,
+    suspensionMessage: susp.message,
     notice: s.notice_text,
     organization: { name: s.organization_name, description: s.organization_description, contact_email: s.contact_email, contact_phone: s.contact_phone, website_url: s.website_url },
     now: new Date().toISOString(),
