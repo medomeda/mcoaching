@@ -60,6 +60,11 @@ export default function LoginPage() {
           </div>
           {params.get("expired") && <Alert tone="warning">Votre session a expiré. Veuillez vous reconnecter.</Alert>}
           {params.get("reset") && <Alert tone="success">Votre mot de passe a été défini. Vous pouvez vous connecter.</Alert>}
+          {sys.data?.suspended && (
+            <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              {sys.data.suspensionMessage ?? "Cet espace est temporairement suspendu."}
+            </p>
+          )}
           {sys.data && !sys.data.hasUsers && (
             <Alert tone="info" title="Plateforme non initialisée" icon={<ShieldCheck className="h-4 w-4" />}>
               Aucun compte n’existe encore.{" "}
