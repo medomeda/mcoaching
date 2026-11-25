@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { withTestDb } from "@/test/db";
 import { client, payment, plan, prospect } from "@/db/schema";
 import { decryptSecret } from "@/lib/secret-box";
-import { changePlan, createClient, getClientView, recordPayment, rotateInstanceKey, setClientStatus } from "./clients";
+import { changePlan, createClient, getClientView, recordPayment, reactivatedStatus, rotateInstanceKey, setClientStatus } from "./clients";
 
 const masterKey = Buffer.alloc(32, 9);
 const input = { name: "Cabinet Awa", contactName: "Awa", contactEmail: "awa@example.com", instanceHost: "awa" };
@@ -82,6 +82,35 @@ describe("clients", () => {
       expect(k2).not.toBe(r.instanceKey);
       const [row2] = await db.select().from(client);
       expect(decryptSecret(row2!.keyEncrypted!, masterKey)).toBe(k2);
+    });
+  });
+
+  it("la fin d'essai est fixée quand la formule est choisie après la création", async () => {
+    await withTestDb(async (db) => {
+      const [p] = await db.insert(plan).values({ slug: "pro", name: "Pro", trialDays: 21 }).returning();
+      const r = await createClient(input, { db, masterKey, now: new Date("2027-01-10T10:00:00Z") });
+      expect(r.client.trialEndsOn).toBeNull();
+      await changePlan(r.client.id, p!.id, "MONTHLY", db, new Date("2027-01-12T10:00:00Z"));
+      const [row] = await db.select().from(client);
+      expect(row!.trialEndsOn).toBe("2027-02-02");
+    });
+  });
+
+  it("le statut « Suspendu » ne se choisit pas à la main : il passe par la suspension de l'instance", async () => {
+    await withTestDb(async (db) => {
+      const r = await createClient(input, { db, masterKey });
+      await expect(setClientStatus(r.client.id, "SUSPENDU", db)).rejects.toThrow(/suspension/i);
+      await db.update(client).set({ status: "SUSPENDU" });
+      await expect(setClientStatus(r.client.id, "ACTIF", db)).rejects.toThrow(/réactiv/i);
+    });
+  });
+
+  it("à la réactivation, le client retrouve « Essai » s'il n'a jamais payé, « Actif » sinon", async () => {
+    await withTestDb(async (db) => {
+      const r = await createClient(input, { db, masterKey });
+      expect(await reactivatedStatus(r.client.id, db)).toBe("ESSAI");
+      await recordPayment(r.client.id, { paidOn: "2027-01-31", amount: 10000, method: "" }, db);
+      expect(await reactivatedStatus(r.client.id, db)).toBe("ACTIF");
     });
   });
 });

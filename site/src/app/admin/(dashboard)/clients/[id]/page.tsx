@@ -48,7 +48,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
           <h2 className="font-semibold text-brand-900">Statut et formule</h2>
           <form action={statusAction} className="mt-3 flex items-end gap-2">
             <input type="hidden" name="id" value={c.id} />
-            <label className="flex-1 text-sm font-medium">Statut<select name="status" defaultValue={c.status} className={input}>{CLIENT_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></label>
+            <label className="flex-1 text-sm font-medium">Statut<select name="status" defaultValue={c.status} className={input}>{CLIENT_STATUSES.filter((s) => s !== "SUSPENDU" || c.status === "SUSPENDU").map((s) => <option key={s} value={s} disabled={s === "SUSPENDU"}>{STATUS_LABELS[s]}</option>)}</select></label>
             <button className="rounded-lg bg-brand-900 px-3 py-2 text-sm font-semibold text-white">Enregistrer</button>
           </form>
           <form action={planAction} className="mt-3 grid grid-cols-[1fr_1fr_auto] items-end gap-2">

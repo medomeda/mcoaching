@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db/client";
 import { BILLING_PERIODS, CLIENT_STATUSES } from "@/db/schema";
 import { loadMasterKey } from "@/lib/secret-box";
-import { changePlan, createClient, recordPayment, rotateInstanceKey, setClientStatus, updateNotes } from "@/server/clients";
+import { applyStatus, changePlan, createClient, reactivatedStatus, recordPayment, rotateInstanceKey, setClientStatus, updateNotes } from "@/server/clients";
 import { eq } from "drizzle-orm";
 import { client as clientTable } from "@/db/schema";
 import { decryptSecret } from "@/lib/secret-box";
@@ -58,7 +58,11 @@ export async function statusAction(f: FormData) {
   const status = String(f.get("status"));
   if (!(CLIENT_STATUSES as readonly string[]).includes(status)) throw new Error("Statut invalide.");
   const id = String(f.get("id"));
-  await setClientStatus(id, status as (typeof CLIENT_STATUSES)[number], db);
+  try {
+    await setClientStatus(id, status as (typeof CLIENT_STATUSES)[number], db);
+  } catch (e) {
+    redirect(`/admin/clients/${id}?erreur=${encodeURIComponent(e instanceof Error ? e.message : "Statut invalide.")}`);
+  }
   redirect(`/admin/clients/${id}`);
 }
 
@@ -115,6 +119,6 @@ export async function suspensionAction(f: FormData) {
     }
   }
   if (error) redirect(`/admin/clients/${id}?erreur=${encodeURIComponent(error)}`);
-  await setClientStatus(id, suspended ? "SUSPENDU" : "ACTIF", db);
+  await applyStatus(id, suspended ? "SUSPENDU" : await reactivatedStatus(id, db), db);
   redirect(`/admin/clients/${id}`);
 }
