@@ -1,4 +1,5 @@
-export type HostKind = "public" | "admin" | "unknown";
+/** `both` : ADMIN_HOST identique à l'hôte public (développement local seulement : en production, deux noms de domaine). */
+export type HostKind = "public" | "admin" | "both" | "unknown";
 
 export interface HostEnv {
   siteUrl: string;
@@ -29,8 +30,11 @@ export function classifyHost(rawHost: string | null, env: HostEnv): HostKind {
     if (!c.name) return false;
     return h.name === c.name && (c.port === "" || h.port === "" || h.port === c.port);
   };
-  if (matches(env.adminHost)) return "admin";
-  if (matches(hostOfUrl(env.siteUrl))) return "public";
+  const isAdmin = matches(env.adminHost);
+  const isPublic = matches(hostOfUrl(env.siteUrl));
+  if (isAdmin && isPublic) return "both";
+  if (isAdmin) return "admin";
+  if (isPublic) return "public";
   return "unknown";
 }
 
@@ -44,6 +48,7 @@ export function decide(kind: HostKind, pathname: string): "next" | "notfound" {
   // La sonde de santé est interrogée par Docker/Coolify avec le nom interne du conteneur : elle répond partout.
   if (startsWithPath(pathname, "/api/health")) return "next";
   if (kind === "unknown") return "notfound";
+  if (kind === "both") return "next";
   if (COMMON_PATHS.some((p) => startsWithPath(pathname, p))) return "next";
   const isAdminPath = ADMIN_PATHS.some((p) => startsWithPath(pathname, p));
   if (kind === "public") return isAdminPath ? "notfound" : "next";

@@ -11,7 +11,8 @@ export function middleware(req: NextRequest) {
     return new NextResponse("Introuvable", { status: 404, headers: { "content-type": "text/plain; charset=utf-8" } });
   }
   const res = NextResponse.next();
-  if (kind === "admin") res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  const adminPath = req.nextUrl.pathname === "/admin" || req.nextUrl.pathname.startsWith("/admin/") || req.nextUrl.pathname.startsWith("/api/admin");
+  if (kind === "admin" || (kind === "both" && adminPath)) res.headers.set("X-Robots-Tag", "noindex, nofollow");
   return res;
 }
 

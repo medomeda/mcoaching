@@ -22,6 +22,19 @@ describe("classifyHost", () => {
   });
 });
 
+describe("même hôte pour la vitrine et l'administration (développement local)", () => {
+  const local = { siteUrl: "http://localhost:3601", adminHost: "localhost:3601" };
+  it("classe l'hôte commun en « both »", () => {
+    expect(classifyHost("localhost:3601", local)).toBe("both");
+    expect(classifyHost("localhost:9999", local)).toBe("unknown");
+  });
+  it("sert à la fois les pages publiques et /admin", () => {
+    expect(decide("both", "/tarifs")).toBe("next");
+    expect(decide("both", "/admin/login")).toBe("next");
+    expect(decide("both", "/api/admin/auth/get-session")).toBe("next");
+  });
+});
+
 describe("decide", () => {
   it("l'hôte public ne sert jamais /admin ni /api/admin", () => {
     expect(decide("public", "/admin")).toBe("notfound");

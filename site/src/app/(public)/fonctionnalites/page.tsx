@@ -1,4 +1,5 @@
 import { features } from "@/content/features";
+import { ProductShot } from "@/components/product-shot";
 import { CtaBand, Section } from "@/components/ui";
 import { pageMetadata } from "@/lib/seo";
 
@@ -15,6 +16,9 @@ export default function FeaturesPage() {
           <h1 className="text-3xl font-bold text-brand-900 sm:text-4xl">Tout pour structurer votre accompagnement</h1>
           <p className="mt-4 max-w-2xl text-lg text-slate-600">De la première demande au rapport de qualité, Mentora couvre l’essentiel de l’accompagnement individuel, sans complexité.</p>
         </div>
+      </section>
+      <section className="bg-white">
+        <div className="mx-auto max-w-5xl px-4 pb-12"><ProductShot src="/images/tableau-de-bord.webp" alt="Tableau de bord Mentora : indicateurs de demandes, de délais et de satisfaction" priority /></div>
       </section>
       <Section title="Les fonctionnalités">
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
