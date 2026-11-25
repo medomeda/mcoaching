@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, Card, CardBody, Loading } from "@/components/ui/display";
-import { Field, FormError, Input, Select } from "@/components/ui/form";
+import { Field, FormError, Input, PasswordInput, Select } from "@/components/ui/form";
 import { api, ApiError } from "@/lib/api";
 import { DEFAULT_BRAND_NAME } from "@/modules/core/branding";
 import { CATEGORY_PACKS, DEFAULT_CATEGORY_PACK } from "@/modules/core/categoryPacks";
@@ -78,10 +78,10 @@ export default function SetupPage() {
               {(p) => <Input {...p} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />}
             </Field>
             <Field label="Mot de passe" required hint="10 caractères minimum, une lettre et un chiffre." error={errors.password}>
-              {(p) => <Input {...p} type="password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />}
+              {(p) => <PasswordInput {...p} autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />}
             </Field>
             <Field label="Confirmation" required error={errors.confirm}>
-              {(p) => <Input {...p} type="password" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />}
+              {(p) => <PasswordInput {...p} autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />}
             </Field>
             <FormError message={error && !Object.keys(errors).length ? error : null} />
             <Button type="submit" className="w-full" loading={busy}>

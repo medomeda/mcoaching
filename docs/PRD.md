@@ -1,4 +1,4 @@
-# PRD — Plateforme de gestion du coaching individuel BRVM
+# PRD — Mentora : plateforme de gestion de l’accompagnement individuel
 
 > **Note (novembre 2026).** Ce PRD a été rédigé pour un premier contexte : une communauté d’investissement sur la BRVM. Le produit s’appelle désormais **Mentora** et s’adresse à tout domaine d’accompagnement individuel. Les mentions de la bourse et de la BRVM ci-dessous sont historiques : dans l’application, le nom, les catégories de demandes et la mention affichée aux membres sont des paramètres de chaque espace. Les règles métier restent inchangées.
 
@@ -6,7 +6,7 @@
 **Date :** 26 octobre 2026  
 **Statut :** Document de référence pour le développement du MVP  
 **Type de produit :** Application web responsive  
-**Public cible :** Administrateurs, coachs en investissement et apprenants d’une communauté d’investissement sur la BRVM  
+**Public cible :** Administrateurs, coachs (ou formateurs, mentors) et apprenants, tous domaines d’accompagnement  
 **Méthode de développement :** Développement assisté par IA de vibecoding  
 **Langue de l’interface :** Français  
 **Fuseau horaire de référence :** Africa/Abidjan (UTC+0)
@@ -17,7 +17,7 @@
 
 Tu es un ingénieur logiciel senior, architecte applicatif, expert UX/UI et développeur full-stack.
 
-Ta mission est de concevoir et de développer une application web complète, fonctionnelle, sécurisée et responsive permettant de gérer le coaching individuel asynchrone d’une communauté d’investissement sur la Bourse Régionale des Valeurs Mobilières (BRVM).
+Ta mission est de concevoir et de développer une application web complète, fonctionnelle, sécurisée et responsive permettant de gérer l’accompagnement individuel asynchrone de membres par leurs coachs, formateurs ou mentors.
 
 Tu dois respecter strictement les exigences fonctionnelles et les règles métier décrites dans ce document.
 
@@ -61,7 +61,7 @@ Si une décision mineure n’est pas précisée, adopte la solution la plus simp
 
 ## 2.1 Contexte
 
-Une communauté accompagne ses membres dans leur apprentissage et leurs décisions d’investissement sur la BRVM.
+Un coach, un formateur ou une organisation accompagne ses membres dans leur apprentissage et leurs décisions, quel que soit le domaine (finance, développement personnel, formation, entrepreneuriat…).
 
 Les membres participent à des séances collectives via des outils comme Telegram ou Zoom. En complément, ils peuvent solliciter un accompagnement individuel auprès de coachs.
 
@@ -168,10 +168,10 @@ Ne pas développer dans cette première version :
 - Appels audio ou vidéo intégrés.
 - Gestion des séances collectives.
 - Application mobile native.
-- Recommandations d’investissement générées par IA.
+- Recommandations ou conseils personnalisés générés par IA.
 - Connexion aux comptes-titres des membres.
 - Analyse automatisée de portefeuille.
-- Connexion à une API boursière pour fournir des cours en temps réel.
+- Connexion à des services externes de données métier (cours, agendas, etc.).
 - Place de marché permettant de choisir librement un coach.
 - Affectation automatique des coachs.
 - Gestion comptable des coachs.
@@ -803,7 +803,7 @@ Ne pas confondre :
 
 L’interface doit être moderne, minimaliste, lisible et adaptée aux ordinateurs, tablettes et smartphones.
 
-Utiliser une identité visuelle professionnelle, en lien avec la finance et l’investissement, sans surcharge décorative.
+Utiliser une identité visuelle professionnelle et sobre, sans surcharge décorative.
 
 ## 10.1 Écrans communs
 
@@ -1183,9 +1183,9 @@ Champs :
 - `created_at`
 - `updated_at`
 
-Exemples initiaux possibles : compréhension d’un instrument financier, fonctionnement de la BRVM, stratégie d’investissement, gestion du risque et questions générales de portefeuille.
+Les catégories dépendent du domaine ; l’application propose des modèles (général, finance, développement personnel, formation, entrepreneuriat) que l’administrateur peut modifier.
 
-Ces catégories ne doivent pas être présentées comme des recommandations financières automatiques.
+Ces catégories ne doivent pas être présentées comme des conseils personnalisés automatiques.
 
 ## 12.8 `coaching_requests`
 
@@ -1952,4 +1952,4 @@ Ne considère pas qu’un écran est terminé tant que les actions qu’il prés
 
 En cas de conflit entre une solution technique simpliste et une exigence métier explicite du présent PRD, respecte l’exigence métier.
 
-Le résultat attendu est un MVP opérationnel de gestion du coaching individuel BRVM, prêt à être testé par de vrais utilisateurs dans un environnement contrôlé.
+Le résultat attendu est un MVP opérationnel de gestion de l’accompagnement individuel, prêt à être testé par de vrais utilisateurs dans un environnement contrôlé.

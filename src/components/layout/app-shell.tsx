@@ -58,7 +58,7 @@ function NavList({ items, pathname, onNavigate }: { items: NavItem[]; pathname: 
             <span className={clsx("h-4.5 w-4.5 shrink-0", active ? "text-gold-100" : "text-brand-300")} aria-hidden>
               {item.icon}
             </span>
-            <span className="flex-1 truncate">{item.label}</span>
+            <span className="min-w-0 flex-1 break-words leading-snug">{item.label}</span>
             {!!item.badge && <span className="rounded-full bg-gold-500 px-1.5 text-xs font-semibold tabular-nums text-white">{item.badge}</span>}
           </Link>
         );

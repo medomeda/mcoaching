@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader, DescriptionList, PageHeader } from "@/components/ui/display";
-import { Field, FormError, Input } from "@/components/ui/form";
+import { Field, FormError, Input, PasswordInput } from "@/components/ui/form";
 import { useSession } from "@/components/providers";
 import { api, ApiError } from "@/lib/api";
 import { fmtDateTime } from "@/lib/format";
@@ -101,13 +101,13 @@ export function ProfilePage({ extra }: { extra?: React.ReactNode }) {
         <CardBody>
           <form onSubmit={savePassword} className="grid gap-4 sm:grid-cols-3" noValidate>
             <Field label="Mot de passe actuel" required error={wErr.current}>
-              {(p) => <Input {...p} type="password" autoComplete="current-password" value={pwd.current} onChange={(e) => setPwd({ ...pwd, current: e.target.value })} />}
+              {(p) => <PasswordInput {...p} autoComplete="current-password" value={pwd.current} onChange={(e) => setPwd({ ...pwd, current: e.target.value })} />}
             </Field>
             <Field label="Nouveau mot de passe" required error={wErr.next} hint="10 caractères min., lettre et chiffre.">
-              {(p) => <Input {...p} type="password" autoComplete="new-password" value={pwd.next} onChange={(e) => setPwd({ ...pwd, next: e.target.value })} />}
+              {(p) => <PasswordInput {...p} autoComplete="new-password" value={pwd.next} onChange={(e) => setPwd({ ...pwd, next: e.target.value })} />}
             </Field>
             <Field label="Confirmation" required error={wErr.confirm}>
-              {(p) => <Input {...p} type="password" autoComplete="new-password" value={pwd.confirm} onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })} />}
+              {(p) => <PasswordInput {...p} autoComplete="new-password" value={pwd.confirm} onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })} />}
             </Field>
             <div className="space-y-3 sm:col-span-3">
               <FormError message={wMsg && !Object.keys(wErr).length ? wMsg : null} />

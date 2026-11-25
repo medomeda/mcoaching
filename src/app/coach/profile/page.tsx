@@ -45,7 +45,7 @@ function CoachProfileCard() {
             ))}
           </div>
           <div className="flex gap-2">
-            <Input value={tag} onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())} placeholder="Ex. : Obligations" aria-label="Nouvelle spécialité" maxLength={60} />
+            <Input value={tag} onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())} placeholder="Ex. : Gestion du temps" aria-label="Nouvelle spécialité" maxLength={60} />
             <Button variant="outline" onClick={addTag}>
               Ajouter
             </Button>

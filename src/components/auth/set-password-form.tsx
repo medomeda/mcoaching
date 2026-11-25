@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, Card, CardBody, Loading } from "@/components/ui/display";
-import { Field, FormError, Input } from "@/components/ui/form";
+import { Field, FormError, PasswordInput } from "@/components/ui/form";
 import { api, ApiError } from "@/lib/api";
 
 /** Définition (activation) ou réinitialisation du mot de passe par jeton à usage unique. */
@@ -65,10 +65,10 @@ export function SetPasswordForm({ purpose }: { purpose: "ACTIVATION" | "PASSWORD
               Compte : <strong>{info.data?.full_name}</strong> ({info.data?.email})
             </p>
             <Field label="Mot de passe" required hint="10 caractères minimum, avec au moins une lettre et un chiffre." error={fieldErrors.password}>
-              {(p) => <Input {...p} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />}
+              {(p) => <PasswordInput {...p} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />}
             </Field>
             <Field label="Confirmation" required error={fieldErrors.confirm}>
-              {(p) => <Input {...p} type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />}
+              {(p) => <PasswordInput {...p} autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />}
             </Field>
             <FormError message={error && !Object.keys(fieldErrors).length ? error : null} />
             <Button type="submit" className="w-full" loading={busy}>

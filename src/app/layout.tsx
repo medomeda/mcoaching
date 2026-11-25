@@ -25,8 +25,10 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr">
-      <body>
+    // suppressHydrationWarning : des extensions du navigateur (gestionnaires de mots de passe, correcteurs, thèmes sombres)
+    // ajoutent des attributs à <html> et <body> avant l'hydratation et provoquent un avertissement sans rapport avec l'application.
+    <html lang="fr" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <Providers>
           {children}
           <DemoToolbar />

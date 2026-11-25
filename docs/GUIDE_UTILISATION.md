@@ -8,7 +8,7 @@ La plateforme remplace les conversations privées dispersées (WhatsApp, Telegra
 |---|---|---|
 | **Apprenant** | Poser vos questions à votre coach et suivre les réponses | `/learner` |
 | **Coach** | Répondre aux demandes de vos apprenants dans les délais | `/coach` |
-| **Administrateur** | Organiser le coaching et surveiller la qualité de service | `/admin` |
+| **Administrateur** | Organiser l’accompagnement et surveiller la qualité de service | `/admin` |
 
 L'application s'utilise dans un navigateur, sur ordinateur comme sur téléphone. Vous arrivez automatiquement dans votre espace après connexion.
 
@@ -49,7 +49,7 @@ Vous recevez une confirmation. Tant que vous n'avez pas soumis, c'est un **broui
 > **Conseil :** une demande = un sujet. Pour une autre question, créez une nouvelle demande. Les réponses restent ainsi faciles à retrouver.
 
 ### Suivre et échanger
-- **Accueil** : vos demandes ouvertes, ce qui attend votre réponse, votre droit au coaching.
+- **Accueil** : vos demandes ouvertes, ce qui attend votre réponse, votre droit d’accompagnement.
 - **Mes demandes** : la liste complète, avec le statut de chacune. Utilisez les onglets et la recherche.
 - Ouvrez une demande pour lire les messages, **répondre**, ajouter un fichier et consulter l'historique.
 - Si le coach demande des précisions, la demande passe en **« En attente de l'apprenant »** : répondez pour la relancer.
@@ -57,9 +57,9 @@ Vous recevez une confirmation. Tant que vous n'avez pas soumis, c'est un **broui
 ### Après la clôture
 Quand le coach clôture votre demande, vous pouvez **la noter de 1 à 5** et laisser un commentaire (facultatif). Votre note n'est visible que des personnes autorisées. Vous ne pouvez pas rouvrir une demande clôturée : si besoin, contactez l'administrateur, ou créez-en une nouvelle.
 
-### Mon coach, mon droit au coaching
+### Mon coach, mon droit d’accompagnement
 - **Mon coach** : qui vous accompagne, et ses disponibilités.
-- **Mon droit au coaching** : votre accès est-il actif, et s'il y a un quota, combien de demandes il vous reste. Si votre droit est suspendu ou si aucun coach ne vous est affecté, un message vous l'explique et la création de demande est bloquée : contactez l'administrateur.
+- **Mon droit d’accompagnement** : votre accès est-il actif, et s'il y a un quota, combien de demandes il vous reste. Si votre droit est suspendu ou si aucun coach ne vous est affecté, un message vous l'explique et la création de demande est bloquée : contactez l'administrateur.
 
 ---
 
@@ -101,15 +101,15 @@ La liste de vos apprenants, leur historique et leurs demandes en cours.
 ### Premier démarrage
 Sur une plateforme vide, la page **/setup** permet de créer le premier administrateur. Faites-le immédiatement après le déploiement.
 
-### Mettre en place la communauté (dans cet ordre)
+### Mettre en place votre espace (dans cet ordre)
 1. **Comptes → Nouveau compte** : créez les coachs, puis les apprenants. Le compte est actif tout de suite ; une fenêtre affiche **une seule fois** le mot de passe provisoire (bouton *Copier*) : transmettez-le à la personne. *Réinitialiser l'accès* en génère un nouveau.
 2. **Affectations** : associez chaque apprenant à un coach. Les changements sont historisés.
-3. **Droits et quotas** : donnez à chaque apprenant son droit au coaching (période, et éventuellement un nombre de demandes). Vous pouvez suspendre, corriger ou rembourser une unité, toujours avec trace.
+3. **Droits et quotas** : donnez à chaque apprenant son droit d’accompagnement (période, et éventuellement un nombre de demandes). Vous pouvez suspendre, corriger ou rembourser une unité, toujours avec trace.
 4. **Paramètres** : horaires et jours de service, jours fériés, délai cible, catégories de demandes, formats et taille des pièces jointes.
 
 ### Superviser au quotidien
 - **Tableau de bord** : demandes ouvertes, **en retard**, charge par coach, délais moyens, satisfaction. Cliquez sur un chiffre pour voir les demandes concernées.
-- **Demandes de coaching** : toutes les demandes, filtrables par coach, apprenant, statut, priorité et période. Sur une demande, vous pouvez **réaffecter**, **changer la priorité**, **relancer le coach**, ou **rouvrir** une demande clôturée (avec un motif obligatoire : seul l'administrateur peut le faire).
+- **Demandes d’accompagnement** : toutes les demandes, filtrables par coach, apprenant, statut, priorité et période. Sur une demande, vous pouvez **réaffecter**, **changer la priorité**, **relancer le coach**, ou **rouvrir** une demande clôturée (avec un motif obligatoire : seul l'administrateur peut le faire).
 - **Notifications** : suivez les incidents, par exemple un e-mail non envoyé, et relancez-le.
 
 ### Rapports
