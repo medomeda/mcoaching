@@ -9,6 +9,7 @@ import { getClientView } from "@/server/clients";
 import { instanceUrl } from "@/server/instance-address";
 import { notesAction, paymentAction, planAction, statusAction } from "../actions";
 import { RotateKey } from "./rotate-key";
+import { TestConnection } from "./test-connection";
 
 export const dynamic = "force-dynamic";
 const fmt = (d: string | null) => (d ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(new Date(`${d}T00:00:00Z`)) : "—");
@@ -36,7 +37,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
             <div><dt className="inline text-slate-600">Prochaine échéance : </dt><dd className="inline">{fmt(c.nextDueOn)}</dd></div>
             <div><dt className="inline text-slate-600">Clé d’accès : </dt><dd className="inline">{c.hasKey ? "enregistrée (chiffrée)" : "absente"}</dd></div>
           </dl>
-          <div className="mt-4"><RotateKey id={c.id} /></div>
+          <div className="mt-4 space-y-3"><TestConnection id={c.id} /><RotateKey id={c.id} /></div>
         </section>
 
         <section className={card}>

@@ -5,6 +5,11 @@ import { db } from "@/db/client";
 import { BILLING_PERIODS, CLIENT_STATUSES } from "@/db/schema";
 import { loadMasterKey } from "@/lib/secret-box";
 import { changePlan, createClient, recordPayment, rotateInstanceKey, setClientStatus, updateNotes } from "@/server/clients";
+import { eq } from "drizzle-orm";
+import { client as clientTable } from "@/db/schema";
+import { decryptSecret } from "@/lib/secret-box";
+import { instanceTarget } from "@/lib/instance-url";
+import { fetchHealth, fetchUsage, type HealthResult, type InstanceUsage } from "@/server/instance-client";
 import { guard } from "@/server/guard";
 
 export type CreateState = { ok: true; clientId: string; instanceKey: string } | { ok: false; error: string } | null;
@@ -71,4 +76,23 @@ export async function notesAction(f: FormData) {
   const id = String(f.get("id"));
   await updateNotes(id, String(f.get("notes") ?? ""), db);
   redirect(`/admin/clients/${id}`);
+}
+
+export type TestState = { health: HealthResult; usage: InstanceUsage | null; error?: undefined } | { error: string } | null;
+
+/** Teste la connexion à l'instance : santé puis compteurs d'usage (la clé reste côté serveur). */
+export async function testConnectionAction(_prev: TestState, f: FormData): Promise<TestState> {
+  await guard();
+  const [c] = await db.select().from(clientTable).where(eq(clientTable.id, String(f.get("id"))));
+  if (!c) return { error: "Client introuvable." };
+  const url = instanceTarget(c.instanceHost, process.env.INSTANCE_DOMAIN);
+  if (!url) return { error: "Adresse d’instance invalide ou INSTANCE_DOMAIN non définie." };
+  const health = await fetchHealth(url);
+  let usage: InstanceUsage | null = null;
+  try {
+    if (c.keyEncrypted) usage = await fetchUsage(url, decryptSecret(c.keyEncrypted, loadMasterKey()));
+  } catch {
+    return { error: "Clé d’instance illisible (MASTER_KEY modifiée ?)." };
+  }
+  return { health, usage };
 }
