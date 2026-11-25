@@ -57,6 +57,13 @@ Garanties de cohérence : verrous `SELECT … FOR UPDATE`, verrous consultatifs,
 - Migrations `0006_brand_and_notice` et `0007_organization_identity` (colonnes ajoutées à `app_settings`). Les instances existantes passent au nom *Mentora* et gardent leurs catégories actuelles, à modifier dans Paramètres.
 - Vérifié : typecheck, 53 tests unitaires et d'acceptation, 11 parcours Playwright (mode démo), et un essai sur base jetable (migration, création d'espace avec modèle, changement de nom, titre de l'onglet).
 
+### 3.5 Site Mentora (vitrine + tableau de bord opérateur) et supervision des instances
+- **Dossier `site/`** (projet indépendant, base `mentora_site`) : vitrine publique (accueil, fonctionnalités, pour qui, tarifs, FAQ, essai gratuit, pages légales, SEO : métadonnées, plan du site, robots, JSON-LD), tableau de bord opérateur sur un second nom de domaine (connexion + double authentification obligatoire, formules, prospects, clients, paiements, alertes, journal), supervision (santé toutes les 5 min, usage quotidien, suspension d'une instance). Guide : `docs/DEPLOIEMENT_SITE.md`.
+- **Dans Mentora** : `GET /api/ops/usage` (compteurs uniquement) et `POST /api/ops/suspension`, actifs seulement si `OPS_API_KEY` est définie ; migration `0008_suspension` ; une instance suspendue refuse connexions et appels (message affiché), n'envoie plus rappels ni e-mails, garde ses données ; `/api/health` reste en 200.
+- **Procédure d'un nouveau client** : `docs/MISE_EN_SERVICE_CLIENT.md` ; sauvegarde de toutes les bases : `scripts/ops/backup-all.sh`.
+- **Vérifié** : 113 tests unitaires et d'intégration dans `site/`, 63 dans la racine (dont 7 sur les points d'accès `ops`, sur base jetable), 5 parcours Playwright dans `site/` dont le parcours complet « demande d'essai → client → deux instances réelles → suspension → réactivation ». Pour relancer ce parcours : `export MENTORA_STANDALONE_DIR=$(site/scripts/build-mentora-for-e2e.sh)` puis `cd site && npx playwright test`.
+- **Limites connues** : les instances existantes doivent être mises à jour (nouvelle image + `OPS_API_KEY`) pour être supervisées ; paiement et facturation restent manuels ; pas d'e-mail de notification (le tableau de bord est la seule voie d'alerte).
+
 ## 4. Deux modes de fonctionnement
 
 | | Démo | Serveur |
@@ -104,8 +111,8 @@ Pièges connus :
 |---|---|---|
 | P1 | Produit neutre : nom, mention, catégories par modèle | **Fait** |
 | P2 | **Vocabulaire par espace** (coach/apprenant → formateur/participant, consultant/client…). Non fait : « coach » et « apprenant » restent écrits en dur dans environ 150 textes d'interface, dans les notifications et dans les e-mails, et les accords du français imposent de réécrire chaque phrase. À traiter avec des modèles de vocabulaire. | À faire |
-| P3 | Procédure de mise en service d'un client (une instance par client) | À faire |
-| P4 | Site vitrine (`site/`), offre et tarifs, tableau de bord opérateur — plan : `docs/superpowers/plans/2026-11-25-mentora-site-saas.md` | En cours (vitrine réalisée ; tableau de bord à suivre) |
+| P3 | Procédure de mise en service d'un client (une instance par client) — `docs/MISE_EN_SERVICE_CLIENT.md`, `scripts/ops/` | **Fait** |
+| P4 | Site vitrine (`site/`), offre et tarifs, tableau de bord opérateur — plan : `docs/superpowers/plans/2026-11-25-mentora-site-saas.md` | **Fait** (reste à fournir : domaine, mentions légales, prix et limites des formules, e-mail de contact ; puis déploiement) |
 | P5 | Multi-client (espaces de travail) quand le seuil est atteint | Plus tard |
 
 ## 7. État de qualité (dernière vérification)

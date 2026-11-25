@@ -55,6 +55,12 @@ describe("processTrial", () => {
       expect(await db.select().from(prospect)).toHaveLength(0);
     });
   });
+  it("en cas d'erreur, renvoie les valeurs saisies pour que le formulaire ne soit pas vidé", async () => {
+    await withTestDb(async (db) => {
+      const r = await processTrial(db, { ...valid, consent: "", message: "Mon message" }, "1.1.1.1", open());
+      expect(!r.ok && r.values).toEqual({ name: "Awa Traoré", email: "Awa@Example.com", phone: "", activity: "Coaching de carrière", message: "Mon message" });
+    });
+  });
   it("6e envoi dans la fenêtre depuis la même IP : refusé", async () => {
     await withTestDb(async (db) => {
       const limiter = createRateLimiter({ max: 5, windowMs: 3600_000 });

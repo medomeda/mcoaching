@@ -32,8 +32,23 @@ export interface HealthResult {
 /** Les chemins de test peuvent préfixer le chemin de base (ex. /redirect) ; en production `url` est l'origine. */
 const join = (url: URL, path: string) => `${url.pathname.replace(/\/$/, "")}${path}`;
 
+/**
+ * Réservé aux tests de bout en bout : INSTANCE_CONNECT_OVERRIDES = JSON {"acme.mentora.app": "http://127.0.0.1:3721"}.
+ * L'adresse reste validée par `parseInstanceUrl` ; seule la destination réseau change. Ne jamais définir en production.
+ */
+function connectOrigin(url: URL): string {
+  const raw = process.env.INSTANCE_CONNECT_OVERRIDES;
+  if (!raw) return url.origin;
+  try {
+    const map = JSON.parse(raw) as Record<string, string>;
+    return map[url.hostname] ?? url.origin;
+  } catch {
+    return url.origin;
+  }
+}
+
 async function call(url: URL, path: string, init: RequestInit, timeoutMs: number) {
-  return fetch(new URL(join(url, path), url.origin), { ...init, redirect: "manual", signal: AbortSignal.timeout(timeoutMs), cache: "no-store" });
+  return fetch(new URL(join(url, path), connectOrigin(url)), { ...init, redirect: "manual", signal: AbortSignal.timeout(timeoutMs), cache: "no-store" });
 }
 
 export async function fetchHealth(url: URL, opts: FetchOpts = {}): Promise<HealthResult> {

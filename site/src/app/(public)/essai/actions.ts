@@ -11,6 +11,6 @@ export async function submitTrial(_prev: TrialResult | null, formData: FormData)
     return await processTrial(db, Object.fromEntries(formData), ip, trialLimiter);
   } catch (e) {
     console.error("[essai]", e instanceof Error ? e.message : "erreur");
-    return { ok: false, fieldErrors: { _form: "Une erreur est survenue. Réessayez dans un instant." } };
+    return { ok: false, fieldErrors: { _form: "Une erreur est survenue. Réessayez dans un instant." }, values: Object.fromEntries([...formData].filter(([, v]) => typeof v === "string")) as Record<string, string> };
   }
 }

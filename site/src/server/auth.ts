@@ -26,11 +26,16 @@ export interface AuthOptions {
   secret?: string;
 }
 
-/** Adresse de l'hôte d'administration déduite de ADMIN_HOST (http en local, https sinon). */
-export function adminBaseUrl(adminHost = process.env.ADMIN_HOST): string | undefined {
+/** Adresse de l'hôte d'administration : ADMIN_HOST avec le schéma de SITE_URL (https en production, http en local). */
+export function adminBaseUrl(adminHost = process.env.ADMIN_HOST, siteUrl = process.env.SITE_URL): string | undefined {
   if (!adminHost) return undefined;
-  const local = adminHost.startsWith("localhost") || adminHost.includes(".localhost");
-  return `${local ? "http" : "https"}://${adminHost}`;
+  let scheme = "https:";
+  try {
+    if (siteUrl) scheme = new URL(siteUrl).protocol;
+  } catch {
+    /* SITE_URL invalide : https par défaut */
+  }
+  return `${scheme}//${adminHost}`;
 }
 
 /** Fabrique de l'authentification ; `database` et les options sont injectables pour les tests. */

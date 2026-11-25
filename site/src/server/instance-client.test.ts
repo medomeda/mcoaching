@@ -62,6 +62,18 @@ describe("fetchUsage", () => {
   });
 });
 
+describe("INSTANCE_CONNECT_OVERRIDES (tests de bout en bout uniquement)", () => {
+  it("redirige l'adresse validée vers l'origine locale indiquée, sans effet sur les autres hôtes", async () => {
+    process.env.INSTANCE_CONNECT_OVERRIDES = JSON.stringify({ "acme.mentora.app": base.origin });
+    try {
+      expect(await fetchHealth(new URL("https://acme.mentora.app"))).toMatchObject({ ok: true, status: 200 });
+      expect(await fetchHealth(new URL("https://autre.mentora.app"), { timeoutMs: 300 })).toMatchObject({ ok: false });
+    } finally {
+      delete process.env.INSTANCE_CONNECT_OVERRIDES;
+    }
+  });
+});
+
 describe("setInstanceSuspension", () => {
   it("envoie la clé en en-tête et le corps attendu", async () => {
     seen.length = 0;

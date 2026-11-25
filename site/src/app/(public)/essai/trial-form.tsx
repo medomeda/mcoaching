@@ -28,14 +28,15 @@ export function TrialForm() {
     );
   }
   const e = state && !state.ok ? state.fieldErrors : {};
+  const v = (state && !state.ok ? state.values : undefined) ?? {};
   return (
     <form action={action} className="space-y-4" noValidate>
       {e._form ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{e._form}</p> : null}
-      <Field name="name" label="Nom et prénom" error={e.name}><input id="name" name="name" required autoComplete="name" aria-describedby={e.name ? "name-error" : undefined} className={input} /></Field>
-      <Field name="email" label="Adresse e-mail" error={e.email}><input id="email" name="email" type="email" required autoComplete="email" aria-describedby={e.email ? "email-error" : undefined} className={input} /></Field>
-      <Field name="phone" label="Téléphone (facultatif)" error={e.phone}><input id="phone" name="phone" type="tel" autoComplete="tel" className={input} /></Field>
-      <Field name="activity" label="Votre activité ou domaine" error={e.activity}><input id="activity" name="activity" placeholder="Ex. : coaching de carrière, formation en gestion…" className={input} /></Field>
-      <Field name="message" label="Message (facultatif)" error={e.message}><textarea id="message" name="message" rows={4} className={input} /></Field>
+      <Field name="name" label="Nom et prénom" error={e.name}><input id="name" name="name" defaultValue={v.name} required autoComplete="name" aria-describedby={e.name ? "name-error" : undefined} className={input} /></Field>
+      <Field name="email" label="Adresse e-mail" error={e.email}><input id="email" name="email" defaultValue={v.email} type="email" required autoComplete="email" aria-describedby={e.email ? "email-error" : undefined} className={input} /></Field>
+      <Field name="phone" label="Téléphone (facultatif)" error={e.phone}><input id="phone" name="phone" defaultValue={v.phone} type="tel" autoComplete="tel" className={input} /></Field>
+      <Field name="activity" label="Votre activité ou domaine" error={e.activity}><input id="activity" name="activity" defaultValue={v.activity} placeholder="Ex. : coaching de carrière, formation en gestion…" className={input} /></Field>
+      <Field name="message" label="Message (facultatif)" error={e.message}><textarea id="message" name="message" defaultValue={v.message} rows={4} className={input} /></Field>
       {/* Champ piège : invisible pour les personnes, rempli par les robots. */}
       <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
         <label htmlFor="website">Ne pas remplir</label>

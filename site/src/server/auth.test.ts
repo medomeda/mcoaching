@@ -76,3 +76,13 @@ describe("authentification de l'opérateur", () => {
     });
   });
 });
+
+describe("adminBaseUrl", () => {
+  it("reprend le schéma de SITE_URL (http en local, https en production)", async () => {
+    const { adminBaseUrl } = await import("./auth");
+    expect(adminBaseUrl("admin.mentora.app", "https://mentora.app")).toBe("https://admin.mentora.app");
+    expect(adminBaseUrl("admin.localtest.me:3601", "http://site.localtest.me:3601")).toBe("http://admin.localtest.me:3601");
+    expect(adminBaseUrl("admin.mentora.app", undefined)).toBe("https://admin.mentora.app");
+    expect(adminBaseUrl(undefined, "https://mentora.app")).toBeUndefined();
+  });
+});

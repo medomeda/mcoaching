@@ -18,7 +18,11 @@ export const zTrialRequest = z.object({
   website: z.string().optional(),
 });
 
-export type TrialResult = { ok: true } | { ok: false; fieldErrors: Record<string, string> };
+/** `values` : champs saisis, renvoyés en cas d'erreur pour que le formulaire (réinitialisé par React après l'action) ne soit pas vidé. */
+export type TrialResult = { ok: true } | { ok: false; fieldErrors: Record<string, string>; values?: Record<string, string> };
+
+const ECHOED = ["name", "email", "phone", "activity", "message"] as const;
+const echo = (input: Record<string, unknown>): Record<string, string> => Object.fromEntries(ECHOED.map((k) => [k, typeof input[k] === "string" ? (input[k] as string) : ""]));
 
 /** Une demande d'essai par IP et par heure : 5 maximum (mémoire du processus). */
 export const trialLimiter = createRateLimiter({ max: 5, windowMs: 3600_000 });
@@ -31,11 +35,11 @@ export async function processTrial(db: Writer, input: Record<string, unknown>, i
     const flat = parsed.error.flatten().fieldErrors;
     const fieldErrors: Record<string, string> = {};
     for (const [k, v] of Object.entries(flat)) if (v?.[0]) fieldErrors[k] = v[0];
-    return { ok: false, fieldErrors };
+    return { ok: false, fieldErrors, values: echo(input) };
   }
   // Champ piège rempli : un robot. Réponse identique à un succès, rien n'est enregistré.
   if (parsed.data.website) return { ok: true };
-  if (!allow(ip)) return { ok: false, fieldErrors: { _form: "Trop de demandes depuis votre connexion. Réessayez plus tard." } };
+  if (!allow(ip)) return { ok: false, fieldErrors: { _form: "Trop de demandes depuis votre connexion. Réessayez plus tard." }, values: echo(input) };
 
   const d = parsed.data;
   await db
