@@ -129,11 +129,17 @@ export class OperatorAuthError extends Error {
   }
 }
 
+/**
+ * Second facteur exigé, sauf si ADMIN_REQUIRE_2FA=false ET hors production (confort de développement local :
+ * en production il reste obligatoire quoi qu'indique la variable).
+ */
+export const twoFactorRequired = (): boolean => process.env.NODE_ENV === "production" || process.env.ADMIN_REQUIRE_2FA !== "false";
+
 /** Exige une session valide ET le second facteur activé ; renvoie l'identifiant de l'opérateur. */
 export async function requireOperator(headers: Headers, a: OperatorAuth = getAuth()): Promise<{ userId: string }> {
   const s = await a.api.getSession({ headers });
   if (!s) throw new OperatorAuthError("Veuillez vous connecter.", "UNAUTHENTICATED");
-  if (!(s.user as { twoFactorEnabled?: boolean }).twoFactorEnabled) {
+  if (twoFactorRequired() && !(s.user as { twoFactorEnabled?: boolean }).twoFactorEnabled) {
     throw new OperatorAuthError("La double authentification doit être activée avant d’accéder au tableau de bord.", "TWO_FACTOR_REQUIRED");
   }
   return { userId: s.user.id };

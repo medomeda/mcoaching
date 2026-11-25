@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { withTestDb } from "@/test/db";
 import { user } from "@/db/schema";
@@ -108,6 +108,32 @@ describe("second facteur : verrouillage", () => {
       // Même avec le bon code, tant que le verrou est actif.
       const r = await a.api.signInEmail({ body: { email: "op@mentora.app", password: PASSWORD } }).catch((e: Error) => e);
       expect(r instanceof Error && /tentatives/i.test(r.message)).toBe(true);
+    });
+  });
+});
+
+describe("double authentification désactivable en développement seulement", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("ADMIN_REQUIRE_2FA=false : une session sans second facteur est acceptée hors production", async () => {
+    await withTestDb(async (db) => {
+      const a = mk(db);
+      await createOperator(a, db, { email: "op@mentora.app", password: PASSWORD });
+      const h = await cookieFor(a, "op@mentora.app");
+      await expect(requireOperator(h, a)).rejects.toThrow(/double authentification/i);
+      vi.stubEnv("ADMIN_REQUIRE_2FA", "false");
+      await expect(requireOperator(h, a)).resolves.toMatchObject({ userId: expect.any(String) });
+    });
+  });
+
+  it("en production, le second facteur reste obligatoire même si la variable est à false", async () => {
+    await withTestDb(async (db) => {
+      const a = mk(db);
+      await createOperator(a, db, { email: "op@mentora.app", password: PASSWORD });
+      const h = await cookieFor(a, "op@mentora.app");
+      vi.stubEnv("ADMIN_REQUIRE_2FA", "false");
+      vi.stubEnv("NODE_ENV", "production");
+      await expect(requireOperator(h, a)).rejects.toThrow(/double authentification/i);
     });
   });
 });
