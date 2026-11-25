@@ -10,3 +10,11 @@ test-results
 playwright-report
 # Pièces jointes privées (PRIVATE_STORAGE_PATH par défaut)
 storage/
+
+# Brainstorming (maquettes temporaires)
+.superpowers/
+
+# site/ (projet indépendant)
+site/.next
+site/node_modules
+site/.env.local

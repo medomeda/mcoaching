@@ -1,0 +1,27 @@
+# Site Mentora (vitrine + tableau de bord) — application seule, base PostgreSQL externe (voir docs/DEPLOIEMENT_SITE.md).
+services:
+  site:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3601:3601"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL est requise}
+      DATABASE_SSL: ${DATABASE_SSL:-}
+      SITE_URL: ${SITE_URL:?SITE_URL est requise}
+      ADMIN_HOST: ${ADMIN_HOST:?ADMIN_HOST est requise}
+      INSTANCE_DOMAIN: ${INSTANCE_DOMAIN:?INSTANCE_DOMAIN est requise}
+      MASTER_KEY: ${MASTER_KEY:?MASTER_KEY est requise}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET est requise}
+      LEGAL_COMPANY_NAME: ${LEGAL_COMPANY_NAME:-}
+      LEGAL_ADDRESS: ${LEGAL_ADDRESS:-}
+      LEGAL_EMAIL: ${LEGAL_EMAIL:-}
+      LEGAL_PHONE: ${LEGAL_PHONE:-}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3601/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s

@@ -29,6 +29,7 @@ import { getAppSettings } from "./config";
 import { activeAdmins, notify, type Tx, type UserRowDb } from "./helpers";
 import { slaResolver } from "./sla";
 import { appUrl } from "../appUrl";
+import { getSuspension } from "../ops/usage";
 
 /** Délais entre tentatives d'envoi (minutes calendaires), comme la simulation. */
 export const EMAIL_BACKOFF_MINUTES = [5, 15, 60, 240];
@@ -286,6 +287,8 @@ export async function runScheduledJobs(): Promise<JobsSummary> {
   const started = new Date();
   const s: JobsSummary = { reminders: 0, overdue: 0, escalations: 0, coachAlerts: 0, emailsSent: 0, emailsFailed: 0, cleaned: 0 };
   let error: string | null = null;
+  // Instance suspendue : ni rappels, ni alertes, ni e-mails (seul le nettoyage continue).
+  const suspended = (await getSuspension()).suspended;
   // Les e-mails passent après les notifications du même cycle : ils partent dans la même exécution.
   const steps: Array<[string, (now: Date, x: JobsSummary) => Promise<void>]> = [
     ["deadlines", processDeadlines],
@@ -294,6 +297,7 @@ export async function runScheduledJobs(): Promise<JobsSummary> {
     ["cleanup", cleanup],
   ];
   for (const [name, fn] of steps) {
+    if (suspended && name !== "cleanup") continue;
     try {
       await fn(started, s);
     } catch (e) {

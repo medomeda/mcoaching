@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Alert, Badge, Card, CardBody } from "@/components/ui/display";
 import { ConfirmDialog } from "@/components/ui/dialog";
-import { Field, FormError, Input } from "@/components/ui/form";
+import { Field, FormError, Input, PasswordInput } from "@/components/ui/form";
 import { homeFor, useSession } from "@/components/providers";
 import { api, ApiError, DEMO_MODE } from "@/lib/api";
 import { ROLE_LABELS, USER_STATUS_LABELS } from "@/lib/labels";
@@ -60,6 +60,11 @@ export default function LoginPage() {
           </div>
           {params.get("expired") && <Alert tone="warning">Votre session a expiré. Veuillez vous reconnecter.</Alert>}
           {params.get("reset") && <Alert tone="success">Votre mot de passe a été défini. Vous pouvez vous connecter.</Alert>}
+          {sys.data?.suspended && (
+            <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              {sys.data.suspensionMessage ?? "Cet espace est temporairement suspendu."}
+            </p>
+          )}
           {sys.data && !sys.data.hasUsers && (
             <Alert tone="info" title="Plateforme non initialisée" icon={<ShieldCheck className="h-4 w-4" />}>
               Aucun compte n’existe encore.{" "}
@@ -74,7 +79,7 @@ export default function LoginPage() {
               {(p) => <Input {...p} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />}
             </Field>
             <Field label="Mot de passe" required>
-              {(p) => <Input {...p} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />}
+              {(p) => <PasswordInput {...p} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />}
             </Field>
             <FormError message={error} />
             <Button type="submit" className="w-full" size="lg" loading={busy} icon={<LogIn className="h-4 w-4" />}>

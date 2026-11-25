@@ -1,6 +1,7 @@
 "use client";
 import { clsx } from "clsx";
-import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { forwardRef, useId, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 
 const control =
   "block rounded-lg border bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-xs transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:bg-slate-50 disabled:text-slate-500";
@@ -13,6 +14,26 @@ export function controlClass(invalid?: boolean, extra?: string) {
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }>(function Input({ className, invalid, ...rest }, ref) {
   return <input ref={ref} className={controlClass(invalid, clsx("h-10", className))} aria-invalid={invalid || undefined} {...rest} />;
+});
+
+/** Champ mot de passe avec bouton « afficher / masquer ». Le champ reste un mot de passe par défaut. */
+export const PasswordInput = forwardRef<HTMLInputElement, Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { invalid?: boolean }>(function PasswordInput({ className, invalid, ...rest }, ref) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="relative">
+      <input ref={ref} type={visible ? "text" : "password"} className={controlClass(invalid, clsx("h-10 pr-10", className))} aria-invalid={invalid || undefined} {...rest} />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+        aria-pressed={visible}
+        title={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-lg text-slate-400 transition hover:text-slate-700 focus-visible:text-slate-700 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-500"
+      >
+        {visible ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+      </button>
+    </div>
+  );
 });
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement> & { invalid?: boolean }>(function Textarea({ className, invalid, ...rest }, ref) {

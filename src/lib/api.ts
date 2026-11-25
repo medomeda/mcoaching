@@ -224,8 +224,9 @@ function check<T>(fn: () => T): T {
 }
 
 /** Erreurs des routes BetterAuth (/api/auth/*) traduites dans le contrat de l'application. */
-function authError(e: { status: number; message?: string }): ApiError {
+export function authError(e: { status: number; message?: string }): ApiError {
   if (e.status === 429) return new ApiError("RATE_LIMITED", e.message ?? "Trop de tentatives. Réessayez dans 15 minutes.", 429);
+  if (e.status === 503) return new ApiError("SERVICE_SUSPENDED", e.message ?? "Cet espace est temporairement suspendu.", 503);
   if (e.status === 403) return new ApiError("FORBIDDEN", e.message ?? "Accès refusé.", 403);
   if (e.status === 401) return new ApiError("UNAUTHENTICATED", "Adresse e-mail ou mot de passe incorrect.", 401);
   return new ApiError("INTERNAL", "Une erreur inattendue est survenue. Réessayez.", e.status || 500);

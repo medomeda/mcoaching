@@ -13,6 +13,7 @@ import { newId } from "./crypto";
 import { sendTransactionalEmail } from "./live/helpers";
 import { db, schema } from "./pg/client";
 import { appUrl, trustedOrigins } from "./appUrl";
+import { getSuspension } from "./ops/usage";
 
 export const SESSION_IDLE_SECONDS = 2 * 60 * 60;
 export const MAX_LOGIN_FAILURES = 5;
@@ -132,6 +133,8 @@ export const auth = betterAuth({
       create: {
         // Seuls les comptes actifs ouvrent une session (jamais PENDING_ACTIVATION ni SUSPENDED).
         before: async (session) => {
+          const susp = await getSuspension();
+          if (susp.suspended) throw new APIError("SERVICE_UNAVAILABLE", { message: susp.message ?? "Cet espace est suspendu." });
           const [u] = await db.select({ status: schema.user.status }).from(schema.user).where(eq(schema.user.id, session.userId));
           if (u?.status === "PENDING_ACTIVATION") {
             throw new APIError("FORBIDDEN", { message: "Votre compte n’est pas encore activé. Utilisez le lien reçu par e-mail." });
