@@ -42,6 +42,16 @@ Dans Coolify, chaque variable doit être « Available at runtime » (voir `docs/
 3. Renseignez les variables ci-dessus, déployez : les migrations s'appliquent au démarrage, l'échec d'une migration arrête le conteneur.
 4. Vérifiez : `https://mentora.app` affiche la vitrine, `https://mentora.app/admin` répond 404, `https://admin.mentora.app/` répond 404 (seul `/admin` existe sur cet hôte).
 
+## 3 bis. Créer le compte opérateur (première mise en service)
+
+Une fois le conteneur démarré, depuis le terminal Coolify de la ressource (ou `docker exec -it <conteneur> sh`) :
+
+```bash
+node /migrate/create-admin.mjs --email vous@exemple.com        # le mot de passe (12 caractères minimum) est demandé sans écho
+```
+
+Ouvrez ensuite `https://admin.<domaine>/admin` : connexion, puis **activation obligatoire de la double authentification** (QR code et 10 codes de secours affichés une seule fois). Un seul compte est possible. Appareil perdu : `node /migrate/create-admin.mjs --reset-2fa --email vous@exemple.com`. Les variables `DATABASE_URL`, `AUTH_SECRET` et `ADMIN_HOST` sont déjà dans l'environnement du conteneur.
+
 Une seule réplique : la limitation de débit du formulaire d'essai est en mémoire.
 
 ## 4. En local
