@@ -21,6 +21,7 @@ test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async () => {
   pool = new Pool({ connectionString: adminUrl.replace(/\/[^/?]*(\?.*)?$/, `/${E2E_DB}$1`), max: 2 });
+  pool.on("error", () => undefined);
   const db = drizzle(pool, { schema, casing: "snake_case" });
   const auth = createAuth(db, { baseURL: ADMIN_HOST, secret: E2E_AUTH_SECRET });
   await createOperator(auth, db, { email: EMAIL, password: PASSWORD });

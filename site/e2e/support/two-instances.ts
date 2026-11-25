@@ -30,6 +30,9 @@ export async function createInstance(label: string, port: number, adminUrl: stri
   await admin.query(`create database ${dbName}`);
   const dbUrl = adminUrl.replace(/\/[^/?]*(\?.*)?$/, `/${dbName}$1`);
   const pool = new Pool({ connectionString: dbUrl, max: 2 });
+  // Connexions inactives coupées par la suppression forcée des bases à la fin du test : sans importance.
+  pool.on("error", () => undefined);
+  admin.on("error", () => undefined);
   await migrate(drizzle(pool), { migrationsFolder: new URL("../../../drizzle", import.meta.url).pathname });
   let child: ChildProcess | null = null;
   const url = `http://127.0.0.1:${port}`;
