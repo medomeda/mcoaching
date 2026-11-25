@@ -1,6 +1,6 @@
 /** Modèle de données du site (§6.4). Montants en FCFA entiers ; limites nulles = illimité. */
 import { sql } from "drizzle-orm";
-import { boolean, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { bigint, boolean, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { withTimezone: true });
 const id = () => uuid().primaryKey().defaultRandom();
@@ -121,3 +121,92 @@ export const auditLog = pgTable("audit_log", {
 export type Plan = typeof plan.$inferSelect;
 export type Client = typeof client.$inferSelect;
 export type Prospect = typeof prospect.$inferSelect;
+
+// --- Authentification de l'opérateur (BetterAuth + double authentification) ---
+export const user = pgTable("user", {
+  id: text().primaryKey(),
+  name: text().notNull(),
+  email: text().notNull().unique(),
+  emailVerified: boolean().notNull().default(false),
+  image: text(),
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+  createdAt: created(),
+  updatedAt: updated(),
+});
+
+export const session = pgTable(
+  "session",
+  {
+    id: text().primaryKey(),
+    expiresAt: ts("expires_at").notNull(),
+    token: text().notNull().unique(),
+    ipAddress: text(),
+    userAgent: text(),
+    userId: text().notNull().references(() => user.id, { onDelete: "cascade" }),
+    createdAt: created(),
+    updatedAt: updated(),
+  },
+  (t) => [index("session_user_idx").on(t.userId)],
+);
+
+export const account = pgTable(
+  "account",
+  {
+    id: text().primaryKey(),
+    accountId: text().notNull(),
+    providerId: text().notNull(),
+    userId: text().notNull().references(() => user.id, { onDelete: "cascade" }),
+    accessToken: text(),
+    refreshToken: text(),
+    idToken: text(),
+    accessTokenExpiresAt: ts("access_token_expires_at"),
+    refreshTokenExpiresAt: ts("refresh_token_expires_at"),
+    scope: text(),
+    password: text(),
+    createdAt: created(),
+    updatedAt: updated(),
+  },
+  (t) => [index("account_user_idx").on(t.userId)],
+);
+
+export const verification = pgTable(
+  "verification",
+  {
+    id: text().primaryKey(),
+    identifier: text().notNull(),
+    value: text().notNull(),
+    expiresAt: ts("expires_at").notNull(),
+    createdAt: created(),
+    updatedAt: updated(),
+  },
+  (t) => [index("verification_identifier_idx").on(t.identifier)],
+);
+
+export const twoFactor = pgTable(
+  "two_factor",
+  {
+    id: text().primaryKey(),
+    secret: text().notNull(),
+    backupCodes: text("backup_codes").notNull(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    verified: boolean().notNull().default(true),
+    failedVerificationCount: integer("failed_verification_count").notNull().default(0),
+    lockedUntil: ts("locked_until"),
+  },
+  (t) => [index("two_factor_user_idx").on(t.userId), index("two_factor_secret_idx").on(t.secret)],
+);
+
+export const rateLimit = pgTable("rate_limit", {
+  id: text().primaryKey(),
+  key: text().notNull().unique(),
+  count: integer().notNull(),
+  lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+});
+
+/** Échecs de connexion par adresse : verrou de 15 minutes après 5 échecs. */
+export const loginAttempt = pgTable("login_attempt", {
+  email: text().primaryKey(),
+  failures: integer().notNull().default(0),
+  lockedUntil: ts("locked_until"),
+  lastFailureAt: ts("last_failure_at"),
+});
