@@ -4,6 +4,9 @@ import { faqLd } from "@/lib/seo";
 import { CtaBand, Faq, Section } from "@/components/ui";
 import { pageMetadata } from "@/lib/seo";
 
+// Rendu à la demande : SITE_URL et LEGAL_* sont lues à l'exécution (voir dynamic-pages.test.ts).
+export const dynamic = "force-dynamic";
+
 export const metadata = pageMetadata("/faq");
 
 export default function FaqPage() {

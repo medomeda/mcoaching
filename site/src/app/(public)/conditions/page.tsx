@@ -1,6 +1,9 @@
 import { Prose } from "@/components/ui";
 import { pageMetadata } from "@/lib/seo";
 
+// Rendu à la demande : SITE_URL et LEGAL_* sont lues à l'exécution (voir dynamic-pages.test.ts).
+export const dynamic = "force-dynamic";
+
 export const metadata = pageMetadata("/conditions");
 
 export default function TermsPage() {
