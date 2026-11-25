@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { db } from "@/db/client";
 import { plan } from "@/db/schema";
 import { listClients } from "@/server/clients";
+import { loadClientStates } from "@/server/client-state";
 import { instanceUrl } from "@/server/instance-address";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ type Row = Awaited<ReturnType<typeof listClients>>[number];
 const fmt = (d: string | null) => (d ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(new Date(`${d}T00:00:00Z`)) : "—");
 
 export default async function ClientsPage() {
-  const [rows, plans] = await Promise.all([listClients(db), db.select().from(plan)]);
+  const [rows, plans, { lastCheck }] = await Promise.all([listClients(db), db.select().from(plan), loadClientStates(db)]);
   const planName = new Map(plans.map((p) => [p.id, p.name]));
   return (
     <>
@@ -26,6 +27,7 @@ export default async function ClientsPage() {
           { header: "Adresse", cell: (c) => instanceUrl(c.instanceHost)?.replace("https://", "") ?? "—" },
           { header: "Formule", cell: (c) => (c.planId ? planName.get(c.planId) ?? "—" : "—") },
           { header: "Statut", cell: (c) => <StatusBadge status={c.status} /> },
+          { header: "En ligne", cell: (c) => { const h = lastCheck.get(c.id); return h ? <span className={h.ok ? "text-green-700" : "font-semibold text-red-700"}>{h.ok ? "● En ligne" : "● Hors ligne"}</span> : <span className="text-slate-500">—</span>; } },
           { header: "Prochaine échéance", cell: (c) => fmt(c.nextDueOn) },
         ]}
       />

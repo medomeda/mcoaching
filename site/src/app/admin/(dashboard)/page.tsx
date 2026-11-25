@@ -1,10 +1,19 @@
+import { AlertList } from "@/components/admin/alert-list";
 import { PageHeader } from "@/components/admin/page-header";
+import { db } from "@/db/client";
+import { computeAlerts } from "@/lib/alerts";
+import { loadClientStates } from "@/server/client-state";
 
-export default function AdminHome() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminHome() {
+  const now = new Date();
+  const { states, plans, newProspects } = await loadClientStates(db, now);
+  const alerts = computeAlerts({ now, clients: states, newProspects, plans });
   return (
     <>
-      <PageHeader title="Accueil" description="Alertes et état de vos clients." />
-      <p className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Aucune alerte pour le moment.</p>
+      <PageHeader title="Accueil" description="Alertes calculées à partir de l’état et de l’usage de vos clients." />
+      <AlertList alerts={alerts} />
     </>
   );
 }

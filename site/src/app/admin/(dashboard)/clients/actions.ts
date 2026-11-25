@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm";
 import { client as clientTable } from "@/db/schema";
 import { decryptSecret } from "@/lib/secret-box";
 import { instanceTarget } from "@/lib/instance-url";
-import { fetchHealth, fetchUsage, type HealthResult, type InstanceUsage } from "@/server/instance-client";
+import { fetchHealth, fetchUsage, setInstanceSuspension, type HealthResult, type InstanceUsage } from "@/server/instance-client";
 import { guard } from "@/server/guard";
 
 export type CreateState = { ok: true; clientId: string; instanceKey: string } | { ok: false; error: string } | null;
@@ -95,4 +95,26 @@ export async function testConnectionAction(_prev: TestState, f: FormData): Promi
     return { error: "Clé d’instance illisible (MASTER_KEY modifiée ?)." };
   }
   return { health, usage };
+}
+
+/** Suspend ou réactive l'instance du client ; le statut n'est modifié que si l'instance a répondu. */
+export async function suspensionAction(f: FormData) {
+  await guard();
+  const id = String(f.get("id"));
+  const suspended = f.get("suspended") === "true";
+  const [c] = await db.select().from(clientTable).where(eq(clientTable.id, id));
+  const url = c ? instanceTarget(c.instanceHost, process.env.INSTANCE_DOMAIN) : null;
+  let error: string | null = null;
+  if (!c || !url || !c.keyEncrypted) error = "Instance non joignable : adresse ou clé manquante.";
+  else {
+    try {
+      const ok = await setInstanceSuspension(url, decryptSecret(c.keyEncrypted, loadMasterKey()), suspended, String(f.get("message") ?? "").trim() || null);
+      if (!ok) error = "L’instance n’a pas confirmé (clé refusée, instance hors ligne ou OPS_API_KEY absente). Le statut n’a pas été modifié.";
+    } catch {
+      error = "Clé d’instance illisible.";
+    }
+  }
+  if (error) redirect(`/admin/clients/${id}?erreur=${encodeURIComponent(error)}`);
+  await setClientStatus(id, suspended ? "SUSPENDU" : "ACTIF", db);
+  redirect(`/admin/clients/${id}`);
 }

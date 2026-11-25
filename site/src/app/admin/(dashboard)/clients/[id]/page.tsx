@@ -7,7 +7,10 @@ import { CLIENT_STATUSES, payment, plan } from "@/db/schema";
 import { formatFcfa } from "@/lib/plans";
 import { getClientView } from "@/server/clients";
 import { instanceUrl } from "@/server/instance-address";
-import { notesAction, paymentAction, planAction, statusAction } from "../actions";
+import { notesAction, paymentAction, planAction, statusAction, suspensionAction } from "../actions";
+import { UsageChart } from "@/components/admin/usage-chart";
+import { usageHistory } from "@/server/client-state";
+import { healthCheck } from "@/db/schema";
 import { RotateKey } from "./rotate-key";
 import { TestConnection } from "./test-connection";
 
@@ -22,6 +25,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
   const c = await getClientView(id, db);
   if (!c) notFound();
   const [plans, payments] = await Promise.all([db.select().from(plan).orderBy(asc(plan.position)), db.select().from(payment).where(eq(payment.clientId, id)).orderBy(desc(payment.paidOn))]);
+  const [history, checks] = await Promise.all([usageHistory(db, id), db.select().from(healthCheck).where(eq(healthCheck.clientId, id)).orderBy(desc(healthCheck.checkedAt)).limit(10)]);
   const today = new Date().toISOString().slice(0, 10);
   const url = instanceUrl(c.instanceHost);
   return (
@@ -74,6 +78,29 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
             <textarea name="notes" rows={5} defaultValue={c.notes} className={input} aria-label="Notes" />
             <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Enregistrer</button>
           </form>
+        </section>
+
+        <section className={card}>
+          <h2 className="font-semibold text-brand-900">Suspension de l’instance</h2>
+          <form action={suspensionAction} className="mt-3 space-y-2">
+            <input type="hidden" name="id" value={c.id} />
+            <input type="hidden" name="suspended" value={String(c.status !== "SUSPENDU")} />
+            {c.status !== "SUSPENDU" ? <label className="block text-sm font-medium">Message affiché aux utilisateurs (facultatif)<input name="message" maxLength={500} className={input} /></label> : null}
+            <button className={`rounded-lg px-3 py-2 text-sm font-semibold ${c.status === "SUSPENDU" ? "bg-green-700 text-white" : "bg-red-700 text-white"}`}>{c.status === "SUSPENDU" ? "Réactiver l’instance" : "Suspendre l’instance"}</button>
+          </form>
+          <p className="mt-2 text-xs text-slate-600">Aucune donnée n’est supprimée ; la réactivation est immédiate.</p>
+        </section>
+
+        <section className={card}>
+          <h2 className="font-semibold text-brand-900">Derniers contrôles de santé</h2>
+          {checks.length === 0 ? <p className="mt-3 text-sm text-slate-600">Aucun contrôle pour le moment.</p> : (
+            <ul className="mt-3 space-y-1 text-sm">{checks.map((h) => <li key={h.id}><span className={h.ok ? "text-green-700" : "font-semibold text-red-700"}>{h.ok ? "● OK" : "● Échec"}</span> · {new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(h.checkedAt)} · {h.latencyMs} ms{h.httpStatus ? ` · HTTP ${h.httpStatus}` : ""}</li>)}</ul>
+          )}
+        </section>
+
+        <section className={`${card} lg:col-span-2`}>
+          <h2 className="mb-3 font-semibold text-brand-900">Usage (relevés quotidiens)</h2>
+          <UsageChart points={history} />
         </section>
 
         <section className={`${card} lg:col-span-2`}>
