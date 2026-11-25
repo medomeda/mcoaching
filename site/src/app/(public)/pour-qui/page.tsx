@@ -1,5 +1,8 @@
 import { audiences } from "@/content/audiences";
 import { CtaBand, Section } from "@/components/ui";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/pour-qui");
 
 export default function AudiencesPage() {
   return (

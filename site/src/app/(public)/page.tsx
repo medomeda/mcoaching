@@ -2,11 +2,18 @@ import { Check } from "lucide-react";
 import { audiences } from "@/content/audiences";
 import { faqItems } from "@/content/faq";
 import { benefits, PROMISES, SLOGAN, steps, SUBTITLE } from "@/content/home";
+import { JsonLd } from "@/components/json-ld";
+import { organizationLd, softwareLd } from "@/lib/seo";
 import { ButtonLink, CtaBand, Faq, Section } from "@/components/ui";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/");
 
 export default function Home() {
   return (
     <>
+      <JsonLd data={organizationLd()} />
+      <JsonLd data={softwareLd([])} />
       <section className="bg-white">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:py-24">
           <p className="text-xs font-semibold uppercase tracking-wider text-gold-700">Pour coachs, formateurs et mentors</p>

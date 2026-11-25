@@ -1,5 +1,8 @@
 import { features } from "@/content/features";
 import { CtaBand, Section } from "@/components/ui";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/fonctionnalites");
 
 export default function FeaturesPage() {
   return (

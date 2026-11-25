@@ -1,5 +1,8 @@
 import { legalInfo, shown } from "@/content/legal";
 import { Prose } from "@/components/ui";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/confidentialite");
 
 export default function PrivacyPage() {
   const l = legalInfo();

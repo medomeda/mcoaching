@@ -1,4 +1,7 @@
 import { TrialForm } from "./trial-form";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/essai");
 
 export default function TrialPage() {
   return (

@@ -1,4 +1,7 @@
 import { Prose } from "@/components/ui";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/conditions");
 
 export default function TermsPage() {
   return (
