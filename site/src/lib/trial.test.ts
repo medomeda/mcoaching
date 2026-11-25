@@ -36,15 +36,26 @@ describe("processTrial", () => {
       expect(await db.select().from(prospect)).toHaveLength(0);
     });
   });
-  it("même e-mail en casse différente : un seul prospect, message mis à jour, statut conservé", async () => {
+  it("même e-mail en casse différente : un seul prospect, message ajouté, coordonnées existantes conservées, relancé en « Nouveau »", async () => {
     await withTestDb(async (db) => {
-      await processTrial(db, valid, "1.1.1.1", open());
-      await db.update(prospect).set({ status: "CONTACTE" });
-      const r = await processTrial(db, { ...valid, email: "awa@example.COM", message: "Plus de détails" }, "1.1.1.1", open());
+      await processTrial(db, { ...valid, message: "Premier message" }, "1.1.1.1", open());
+      await db.update(prospect).set({ status: "PERDU", updatedAt: new Date("2020-01-01") });
+      const r = await processTrial(db, { ...valid, email: "awa@example.COM", name: "Quelqu'un d'autre", phone: "999", message: "Plus de détails" }, "1.1.1.1", open());
       expect(r).toEqual({ ok: true });
       const rows = await db.select().from(prospect).where(eq(prospect.emailNormalized, "awa@example.com"));
       expect(rows).toHaveLength(1);
-      expect(rows[0]).toMatchObject({ message: "Plus de détails", status: "CONTACTE" });
+      expect(rows[0]).toMatchObject({ status: "NOUVEAU", name: "Awa Traoré", phone: null });
+      expect(rows[0]!.message).toContain("Premier message");
+      expect(rows[0]!.message).toContain("Plus de détails");
+      expect(rows[0]!.updatedAt.getFullYear()).toBeGreaterThan(2020);
+    });
+  });
+  it("un prospect déjà converti reste converti", async () => {
+    await withTestDb(async (db) => {
+      await processTrial(db, valid, "1.1.1.1", open());
+      await db.update(prospect).set({ status: "CONVERTI" });
+      await processTrial(db, { ...valid, message: "Nouveau message" }, "1.1.1.1", open());
+      expect((await db.select().from(prospect))[0]!.status).toBe("CONVERTI");
     });
   });
   it("erreurs de champ sans insertion", async () => {

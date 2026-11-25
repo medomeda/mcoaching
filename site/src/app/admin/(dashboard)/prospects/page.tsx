@@ -26,7 +26,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
         rowKey={(p) => p.id}
         empty="Aucune demande pour le moment."
         columns={[
-          { header: "Reçue le", cell: (p) => fmt.format(p.createdAt) },
+          { header: "Dernière demande", cell: (p) => fmt.format(p.updatedAt) },
           { header: "Contact", cell: (p) => <><span className="font-semibold">{p.name}</span><br /><span className="text-slate-600">{p.email}{p.phone ? ` · ${p.phone}` : ""}</span></> },
           { header: "Activité", cell: (p) => p.activity || "—" },
           { header: "Message", cell: (p) => <span className="line-clamp-2 max-w-xs text-slate-600">{p.message || "—"}</span> },

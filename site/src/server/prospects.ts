@@ -6,7 +6,7 @@ import { audit } from "./audit";
 type ProspectStatus = (typeof PROSPECT_STATUSES)[number];
 
 export async function listProspects(db: SiteDb, status?: ProspectStatus) {
-  const q = db.select().from(prospect).orderBy(desc(prospect.createdAt));
+  const q = db.select().from(prospect).orderBy(desc(prospect.updatedAt));
   return status ? q.where(eq(prospect.status, status)) : q;
 }
 

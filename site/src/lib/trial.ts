@@ -45,9 +45,15 @@ export async function processTrial(db: Writer, input: Record<string, unknown>, i
   await db
     .insert(prospect)
     .values({ name: d.name, email: d.email, emailNormalized: normalizeEmail(d.email), phone: d.phone, activity: d.activity, message: d.message, consent: true })
+    // Une nouvelle demande avec la même adresse remet le prospect « à traiter » (sauf converti) et AJOUTE le message :
+    // les coordonnées déjà enregistrées ne sont jamais remplacées par celles d'un tiers.
     .onConflictDoUpdate({
       target: prospect.emailNormalized,
-      set: { name: d.name, phone: d.phone, activity: d.activity, message: d.message, updatedAt: sql`now()` },
+      set: {
+        message: sql`case when ${d.message} = '' then ${prospect.message} when ${prospect.message} = '' then ${d.message} else ${prospect.message} || E'\n---\n' || ${d.message} end`,
+        status: sql`case when ${prospect.status} = 'CONVERTI' then ${prospect.status} else 'NOUVEAU'::prospect_status end`,
+        updatedAt: sql`now()`,
+      },
     });
   return { ok: true };
 }
