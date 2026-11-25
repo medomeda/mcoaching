@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --color-brand-50: #eef4fb;
+  --color-brand-100: #d7e5f6;
+  --color-brand-200: #b0cbec;
+  --color-brand-300: #7ea9dd;
+  --color-brand-400: #4c82c8;
+  --color-brand-500: #2b63ad;
+  --color-brand-600: #1f4f90;
+  --color-brand-700: #1a3f73;
+  --color-brand-800: #15325b;
+  --color-brand-900: #0e2340;
+
+  --color-gold-100: #f8efd2;
+  --color-gold-500: #b8902a;
+  --color-gold-700: #7d611a;
+
+  --color-surface: #ffffff;
+  --color-canvas: #f5f7fa;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-canvas text-slate-800 antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+  ::selection {
+    @apply bg-brand-100;
+  }
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+}
