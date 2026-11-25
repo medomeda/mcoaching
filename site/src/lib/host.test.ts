@@ -38,5 +38,9 @@ describe("decide", () => {
     expect(decide("admin", "/api/health")).toBe("next");
     expect(decide("public", "/_next/static/a.js")).toBe("next");
     expect(decide("unknown", "/")).toBe("notfound");
+    expect(decide("unknown", "/admin")).toBe("notfound");
+  });
+  it("la sonde de santé répond sur n'importe quel hôte (contrôle interne de Docker/Coolify)", () => {
+    expect(decide("unknown", "/api/health")).toBe("next");
   });
 });

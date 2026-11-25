@@ -35,12 +35,14 @@ export function classifyHost(rawHost: string | null, env: HostEnv): HostKind {
 }
 
 const ADMIN_PATHS = ["/admin", "/api/admin"];
-const COMMON_PATHS = ["/_next", "/api/health"];
+const COMMON_PATHS = ["/_next"];
 
 const startsWithPath = (pathname: string, base: string) => pathname === base || pathname.startsWith(`${base}/`);
 
 /** Règle d'accès par hôte : l'hôte public ne sert jamais l'administration et inversement. */
 export function decide(kind: HostKind, pathname: string): "next" | "notfound" {
+  // La sonde de santé est interrogée par Docker/Coolify avec le nom interne du conteneur : elle répond partout.
+  if (startsWithPath(pathname, "/api/health")) return "next";
   if (kind === "unknown") return "notfound";
   if (COMMON_PATHS.some((p) => startsWithPath(pathname, p))) return "next";
   const isAdminPath = ADMIN_PATHS.some((p) => startsWithPath(pathname, p));

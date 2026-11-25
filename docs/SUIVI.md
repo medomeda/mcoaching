@@ -105,7 +105,7 @@ Pièges connus :
 | P1 | Produit neutre : nom, mention, catégories par modèle | **Fait** |
 | P2 | **Vocabulaire par espace** (coach/apprenant → formateur/participant, consultant/client…). Non fait : « coach » et « apprenant » restent écrits en dur dans environ 150 textes d'interface, dans les notifications et dans les e-mails, et les accords du français imposent de réécrire chaque phrase. À traiter avec des modèles de vocabulaire. | À faire |
 | P3 | Procédure de mise en service d'un client (une instance par client) | À faire |
-| P4 | Site vitrine, offre et tarifs | À faire |
+| P4 | Site vitrine (`site/`), offre et tarifs, tableau de bord opérateur — plan : `docs/superpowers/plans/2026-11-25-mentora-site-saas.md` | En cours (vitrine réalisée ; tableau de bord à suivre) |
 | P5 | Multi-client (espaces de travail) quand le seuil est atteint | Plus tard |
 
 ## 7. État de qualité (dernière vérification)
