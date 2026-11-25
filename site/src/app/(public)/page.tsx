@@ -58,6 +58,10 @@ export default function Home() {
         </div>
       </Section>
 
+      <Section title="Des formules adaptées à votre activité" intro="Choisissez la formule qui correspond à votre nombre de membres, avec un essai gratuit pour commencer." tone="canvas">
+        <ButtonLink href="/tarifs">Voir les tarifs</ButtonLink>
+      </Section>
+
       <Section title="Questions fréquentes">
         <Faq items={faqItems.slice(0, 5)} />
       </Section>
