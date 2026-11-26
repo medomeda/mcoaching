@@ -25,7 +25,7 @@ export function memoryFileStore(): FileStore {
   };
 }
 
-const DB_NAME = "mcoaching-private-files";
+const DB_NAME = "mentora-private-files";
 const STORE = "files";
 
 function openDb(factory: IDBFactory): Promise<IDBDatabase> {

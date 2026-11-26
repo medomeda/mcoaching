@@ -22,7 +22,7 @@ import * as users from "@/server/api/users";
 import type { Call } from "@/server/api/context";
 import { authClient } from "./auth-client";
 
-const TOKEN_KEY = "mcoaching.session";
+const TOKEN_KEY = "mentora.session";
 
 export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 

@@ -17,7 +17,7 @@ export interface StorageAdapter {
   clear(): void;
 }
 
-export const STORAGE_KEY = "mcoaching.db.v1";
+export const STORAGE_KEY = "mentora.db.v1";
 
 export function localStorageAdapter(): StorageAdapter {
   return {

@@ -24,7 +24,7 @@ export const liveDbAvailable = adminUrl() !== null;
 export async function createLiveDb(): Promise<{ drop: () => Promise<void>; url: string }> {
   const admin = adminUrl();
   if (!admin) throw new Error("Aucune connexion d'administration PostgreSQL pour les tests.");
-  const name = `mcoaching_test_${randomBytes(5).toString("hex")}`;
+  const name = `mentora_test_${randomBytes(5).toString("hex")}`;
   const pool = new Pool({ connectionString: admin, max: 1 });
   await pool.query(`create database ${name}`);
   const url = admin.replace(/\/[^/?]*(\?.*)?$/, `/${name}$1`);

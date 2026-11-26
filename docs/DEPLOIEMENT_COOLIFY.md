@@ -24,8 +24,8 @@ Dans les deux cas, les migrations de la base s'appliquent toutes seules au déma
 
 ### 2.1 Créer la base
 1. Dans le **même projet et le même environnement** que l'application : **+ New → Database → PostgreSQL** (version 16).
-2. Laissez Coolify générer l'utilisateur, le mot de passe et le nom de la base (ou choisissez `mcoaching`). **Ne cochez pas** « Make it publicly available » : la base ne doit pas être exposée sur Internet.
-3. **Start**. Sur la page **General** de la base, copiez l'**URL de connexion interne** (« Postgres URL (internal) ») : de la forme `postgresql://utilisateur:motdepasse@<nom-interne>:5432/mcoaching`.
+2. Laissez Coolify générer l'utilisateur, le mot de passe et le nom de la base (ou choisissez `mentora`). **Ne cochez pas** « Make it publicly available » : la base ne doit pas être exposée sur Internet.
+3. **Start**. Sur la page **General** de la base, copiez l'**URL de connexion interne** (« Postgres URL (internal) ») : de la forme `postgresql://utilisateur:motdepasse@<nom-interne>:5432/mentora`.
 4. Si le mot de passe contient des caractères spéciaux, encodez-les dans l'URL : `@` → `%40`, `!` → `%21`, `#` → `%23`, `/` → `%2F`.
 
 ### 2.2 Planifier les sauvegardes (à ne pas sauter)
@@ -93,11 +93,11 @@ Aucune variable `NEXT_PUBLIC_*` : le mode serveur est figé dans l'image.
 1. Créez la base PostgreSQL de Coolify (section 2.1), **sans** déployer encore l'application avec le nouveau fichier.
 2. Sur le VPS, exportez l'ancienne base :
    ```bash
-   docker exec <ancien-conteneur-db> sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > mcoaching.dump
+   docker exec <ancien-conteneur-db> sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > mentora.dump
    ```
 3. Importez-la dans la nouvelle (base vide) :
    ```bash
-   docker exec -i <nouveau-conteneur-db> sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner' < mcoaching.dump
+   docker exec -i <nouveau-conteneur-db> sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner' < mentora.dump
    ```
 4. Dans l'application : **Docker Compose Location** → `/docker-compose.yml`, cochez « Connect to Predefined Network », ajoutez `DATABASE_URL`, puis **Redeploy**.
 5. Vérifiez l'accès avec un compte existant. Les pièces jointes restent en place si la ressource est la même (le volume `storage-data` garde son nom). Si vous préférez repartir de zéro, sautez les étapes 2 et 3.

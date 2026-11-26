@@ -323,7 +323,7 @@ export async function recentJobRuns(limit = 50) {
 }
 
 const SCHEDULER_INTERVAL_MS = 60_000;
-const g = globalThis as unknown as { mcoachingScheduler?: ReturnType<typeof setInterval> };
+const g = globalThis as unknown as { mentoraScheduler?: ReturnType<typeof setInterval> };
 
 /**
  * Planificateur intégré au serveur Next (lancé par `instrumentation.ts`), une exécution par minute.
@@ -331,9 +331,9 @@ const g = globalThis as unknown as { mcoachingScheduler?: ReturnType<typeof setI
  * si les tâches sont confiées à un processus ou un cron séparé (`npm run jobs`).
  */
 export function startScheduler() {
-  if (g.mcoachingScheduler || process.env.DISABLE_SCHEDULER === "true") return;
+  if (g.mentoraScheduler || process.env.DISABLE_SCHEDULER === "true") return;
   let running = false;
-  g.mcoachingScheduler = setInterval(() => {
+  g.mentoraScheduler = setInterval(() => {
     if (running) return;
     running = true;
     runScheduledJobs()
