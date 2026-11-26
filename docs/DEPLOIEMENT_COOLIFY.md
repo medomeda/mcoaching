@@ -5,9 +5,9 @@ Deux façons de déployer, avec le même code :
 | | **A. Base indépendante** (recommandé) | **B. Tout-en-un** |
 |---|---|---|
 | Fichier compose | `docker-compose.yml` | `docker-compose.with-db.yml` |
-| Contenu | `app` seule | `db` + `app` + `backup` |
+| Contenu | `app` seule | `db` + `app` (service `backup` fourni mais désactivé) |
 | Base PostgreSQL | ressource PostgreSQL de Coolify (ou autre serveur) | conteneur dans le même déploiement |
-| Sauvegardes | planifiées par Coolify vers du stockage S3 | `pg_dump` quotidien dans un volume local |
+| Sauvegardes | planifiées par Coolify vers du stockage S3 | **aucune par défaut** : à activer dans le fichier (voir section 3) |
 | `DATABASE_URL` | **vous la saisissez** | générée automatiquement |
 
 Dans les deux cas, les migrations de la base s'appliquent toutes seules au démarrage de `app`. Dans Coolify, le fichier utilisé se choisit avec **Docker Compose Location**.
@@ -17,7 +17,7 @@ Dans les deux cas, les migrations de la base s'appliquent toutes seules au déma
 ## 1. Prérequis
 
 - Coolify installé sur votre VPS, avec son serveur « localhost » validé.
-- Un nom de domaine (ex. `coaching.mondomaine.com`) dont l'enregistrement **A** pointe vers l'IP du VPS (ports 80 et 443 ouverts).
+- Un nom de domaine (ex. `app.mondomaine.com`) dont l'enregistrement **A** pointe vers l'IP du VPS (ports 80 et 443 ouverts).
 - Le dépôt Git du projet accessible par Coolify, avec ces fichiers committés : `Dockerfile`, `docker-compose.yml`, `docker-compose.with-db.yml`, `docker-entrypoint.sh`, `scripts/migrate.mjs`, `drizzle/`, `public/.gitkeep`.
 
 ## 2. Mode A — Base PostgreSQL indépendante (Coolify)
@@ -37,7 +37,7 @@ Dans les deux cas, les migrations de la base s'appliquent toutes seules au déma
 1. **+ New → dépôt Git**, branche voulue, **Build Pack : Docker Compose**.
 2. **Base Directory** `/` — **Docker Compose Location** `/docker-compose.yml`.
 3. **Advanced → Docker compose → « Connect to Predefined Network »** : à **cocher**. C'est ce qui permet à `app` de joindre la base par son nom interne. Sans cela, l'application ne trouve pas la base (`ENOTFOUND`).
-4. **Domains**, ligne du service `app` : `https://coaching.mondomaine.com:3600` (le `:3600` est le port interne, le public utilise le 443).
+4. **Domains**, ligne du service `app` : `https://app.mondomaine.com:3600` (le `:3600` est le port interne, le public utilise le 443).
 5. **Environment Variables** : voir la section 4. Saisissez en particulier `DATABASE_URL` avec l'URL interne copiée plus haut.
 6. **Deploy**.
 
@@ -47,9 +47,9 @@ Pour une base **sur un autre serveur ou un service géré** : `DATABASE_URL` ave
 
 1. **Docker Compose Location** : `/docker-compose.with-db.yml`.
 2. Rien à saisir pour la base : Coolify génère `SERVICE_USER_POSTGRES` et `SERVICE_PASSWORD_POSTGRES`.
-3. Ne renseignez **pas** de domaine pour `db` et `backup`.
-4. Le service `backup` écrit un dump compressé chaque jour dans le volume `backup-data` (7 jours, 4 semaines, 3 mois). **Ce volume est sur le même VPS** : prévoyez une copie hors serveur.
-5. Restauration d'un dump :
+3. Ne renseignez **pas** de domaine pour `db` (ni pour `backup`, si vous l'activez).
+4. **Ce mode ne sauvegarde rien par défaut** : le service `backup` et le volume `backup-data` sont commentés dans `docker-compose.with-db.yml`. Sans eux, la base n'a aucune copie. Pour les activer, décommentez le service `backup` et la ligne `#backup-data:` de la section `volumes`. Il écrit alors un dump compressé chaque jour (7 jours, 4 semaines, 3 mois) dans le volume `backup-data`, **sur le même VPS** : prévoyez une copie hors serveur. Pour des sauvegardes vers S3 gérées par Coolify, utilisez le mode A.
+5. Restauration d'un dump (si `backup` est activé) :
    ```bash
    docker exec -i <conteneur-db> sh -c 'gunzip -c | psql -U "$POSTGRES_USER" "$POSTGRES_DB"' < dump.sql.gz
    ```
@@ -63,7 +63,7 @@ Pour une base **sur un autre serveur ou un service géré** : `DATABASE_URL` ave
 |---|---|---|
 | `DATABASE_URL` *(mode A)* | URL interne de la base | **Obligatoire en mode A.** Mot de passe encodé si caractères spéciaux. |
 | `DATABASE_SSL` *(mode A, optionnelle)* | vide, `require`, `no-verify` ou `disable` | Vide pour une base interne à Coolify. `require` pour une base distante avec SSL. |
-| `APP_URL` | `https://coaching.mondomaine.com` | Adresse publique **exacte**, sans `/` final. Liens des e-mails, cookies, contrôle d'origine. |
+| `APP_URL` | `https://app.mondomaine.com` | Adresse publique **exacte**, sans `/` final. Liens des e-mails, cookies, contrôle d'origine. |
 | `TRUSTED_ORIGINS` | vide ou `https://www.mondomaine.com` | Autres adresses autorisées, séparées par des virgules. |
 | `OPS_API_KEY` | vide, ou la clé générée par le tableau de bord de l'opérateur (Mentora SaaS) | Active `GET /api/ops/usage` (compteurs d'usage uniquement, jamais de contenu) et `POST /api/ops/suspension`. Vide : ces adresses répondent 404. Une clé par instance. |
 | `APP_VERSION` | vide ou ex. `1.4.0` | Version affichée dans le tableau de bord de l'opérateur (par défaut : version du `package.json`). |
@@ -72,7 +72,7 @@ Pour une base **sur un autre serveur ou un service géré** : `DATABASE_URL` ave
 | `EMAIL_FROM` | `Mentora <no-reply@mondomaine.com>` | Domaine **vérifié** chez le fournisseur SMTP. |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` | ex. `smtp.resend.com` / `465` / `resend` / clé API | Cochez « Is Secret » sur le mot de passe. |
 
-**Optionnelles** : `APP_TIMEZONE` (`Africa/Abidjan`), `DISABLE_SCHEDULER` (`false`). Mode B : `POSTGRES_DB`, `BACKUP_SCHEDULE`, `BACKUP_KEEP_DAYS`, `BACKUP_KEEP_WEEKS`, `BACKUP_KEEP_MONTHS`.
+**Optionnelles** : `APP_TIMEZONE` (`Africa/Abidjan`), `DISABLE_SCHEDULER` (`false`). Mode B : `POSTGRES_DB` (défaut `mentora`) ; et, seulement si vous activez le service `backup` : `BACKUP_SCHEDULE`, `BACKUP_KEEP_DAYS`, `BACKUP_KEEP_WEEKS`, `BACKUP_KEEP_MONTHS`.
 
 > **Important.** Pour chaque variable que vous créez à la main, vérifiez que **Runtime** est sur « Available at runtime ». Sur « Not available in the container », la variable n'arrive pas dans l'application.
 
@@ -82,7 +82,7 @@ Aucune variable `NEXT_PUBLIC_*` : le mode serveur est figé dans l'image.
 
 1. **Deploy**, puis suivre **Deployment Logs**.
 2. Dans les journaux de `app` : `Migrations appliquées.` puis `Démarrage de l'application.`. Si la base démarre après l'application, vous verrez « pas encore joignable… nouvelle tentative » pendant jusqu'à une minute : c'est normal.
-3. La sonde `https://coaching.mondomaine.com/api/health` répond `{"status":"ok"}` quand la base est joignable (503 sinon). Coolify s'en sert pour savoir si `app` est « healthy ».
+3. La sonde `https://app.mondomaine.com/api/health` répond `{"status":"ok"}` quand la base est joignable (503 sinon). Coolify s'en sert pour savoir si `app` est « healthy ».
 4. Ouvrez le site : sur une base vide, **/setup** crée le premier administrateur. Faites-le tout de suite (tant qu'il n'existe pas, cette page est accessible à tous).
 5. Vérifiez : connexion, création d'un coach (mot de passe provisoire affiché une fois), liste mise à jour sans rafraîchir.
 
