@@ -70,6 +70,13 @@ Garanties de cohérence : verrous `SELECT … FOR UPDATE`, verrous consultatifs,
 - **Images du site public** (`site/public/images/`) régénérées depuis le mode démo avec le nouveau logo, sans le bouton « Démo ».
 - **Docker** : `docker-compose.yml` = application seule avec base PostgreSQL indépendante (variante par défaut) ; `docker-compose.with-db.yml` = base + application (sauvegarde en commentaire). Déploiement Coolify repris de zéro.
 
+### 3.7 Application installable (PWA) et notifications push (26/11/2026)
+- **Installation** : manifeste (nom = nom de la plateforme de l'instance), icônes aux couleurs du logo, carte d'invitation sur l'accueil des trois espaces (avec les étapes pour iPhone) et section « Application » du profil.
+- **Mises à jour** : service worker servi par `/sw.js` avec l'identifiant de build (`SOURCE_COMMIT`). Après un déploiement, message « Nouvelle version disponible » avec bouton « Mettre à jour », sans rechargement imposé. Rien de privé n'est mis en cache ; page « hors ligne » de secours.
+- **Push** : activation par appareil depuis le profil (autorisation demandée au clic), bouton de test, retrait de l'appareil et vidage des caches à la déconnexion. Envoi après validation de la transaction (une opération annulée n'envoie rien), jamais bloquant ; **l'écran verrouillé n'affiche que le type** (« Nouveau message », « Échéance proche »…), jamais de titre de demande ni de nom. Aucun push pour une instance ou un compte suspendu. Table `push_subscription` (migration `0009`), clés VAPID par instance (`npm run push:keys`).
+- **Inactif en mode démonstration.** Conception : `docs/superpowers/specs/2026-11-26-pwa-design.md`.
+- **Vérifié** : tests unitaires et sur base jetable (texte par type, rollback, suspension, clés absentes, appareil partagé). **Non vérifié** : réception réelle d'un push sur un téléphone (Android, puis iPhone avec l'application installée).
+
 ## 4. Deux modes de fonctionnement
 
 | | Démo | Serveur |
@@ -111,6 +118,7 @@ Pièges connus :
 | 5 | Vérification visuelle | Fenêtre du mot de passe provisoire, mise à jour automatique des listes et redirection après connexion : vérifiés par le code et le typecheck, **pas encore dans le navigateur**. | À faire |
 | 6 | Déploiement Coolify | Deux variantes prêtes et **testées en local** : base indépendante (`docker-compose.yml`, défaut) et tout-en-un (`docker-compose.with-db.yml`). Guide : [DEPLOIEMENT_COOLIFY.md](DEPLOIEMENT_COOLIFY.md). Reste : bascule de l'instance Coolify vers la base indépendante (+ reprise éventuelle des données), sauvegardes S3 de la base et des pièces jointes, domaine d'envoi d'e-mails. | En cours |
 | 7 | Échec ponctuel du test SMTP | Un échec après démarrage à froid du serveur de dev, non reproduit (44/44 au rejeu). Cause non isolée. | À surveiller |
+| 8 | **Notifications push : validation sur appareil** | Générer et conserver les clés VAPID de chaque instance, déployer, puis vérifier sur un vrai téléphone : activation, réception d'un push (Android, puis iPhone avec l'application installée), texte de l'écran verrouillé, message « Nouvelle version disponible » après un second déploiement. | À faire |
 
 ### 6.b Feuille de route produit (SaaS)
 | # | Chantier | Statut |

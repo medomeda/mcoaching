@@ -29,6 +29,10 @@ services:
       TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
       OPS_API_KEY: ${OPS_API_KEY:-}
       APP_VERSION: ${APP_VERSION:-}
+      # Notifications push : paire de clés générée UNE fois (npm run push:keys), à conserver. Vides : push « non disponible ».
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
       APP_TIMEZONE: ${APP_TIMEZONE:-Africa/Abidjan}
       ACTIVATION_BY_EMAIL: ${ACTIVATION_BY_EMAIL:-false}
       # Une seule instance : le planificateur intégré (échéances, e-mails) reste actif.

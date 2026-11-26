@@ -71,6 +71,8 @@ Pour une base **sur un autre serveur ou un service géré** : `DATABASE_URL` ave
 | `EMAIL_PROVIDER` | `smtp` (ou vide) | Vide : e-mails écrits dans les journaux seulement. |
 | `EMAIL_FROM` | `Mentora <no-reply@mondomaine.com>` | Domaine **vérifié** chez le fournisseur SMTP. |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` | ex. `smtp.resend.com` / `465` / `resend` / clé API | Cochez « Is Secret » sur le mot de passe. |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | *(vides)* | Notifications push : paire de clés générée **une seule fois** par `npm run push:keys` (en local), à conserver (gestionnaire de mots de passe). **Une paire par instance.** Vides : le profil indique « Non disponible sur cette instance ». Cochez « Is Secret » sur la clé privée. Ne les changez pas ensuite : les appareils déjà abonnés cesseraient de recevoir les notifications. |
+| `VAPID_SUBJECT` | `mailto:contact@mondomaine.com` | Contact de l'exploitant transmis aux services push. |
 
 **Optionnelles** : `APP_TIMEZONE` (`Africa/Abidjan`), `DISABLE_SCHEDULER` (`false`). Mode B : `POSTGRES_DB` (défaut `mentora`) ; et, seulement si vous activez le service `backup` : `BACKUP_SCHEDULE`, `BACKUP_KEEP_DAYS`, `BACKUP_KEEP_WEEKS`, `BACKUP_KEEP_MONTHS`.
 
@@ -107,6 +109,7 @@ Aucune variable `NEXT_PUBLIC_*` : le mode serveur est figé dans l'image.
 ## 7. Mises à jour
 
 - Activez le **webhook** du dépôt, ou cliquez **Deploy** après chaque `git push`.
+- **Application installée (PWA)** : après chaque déploiement, les appareils où l'application est installée affichent « Nouvelle version disponible » avec un bouton « Mettre à jour » (vérification à l'ouverture, au retour sur l'application et toutes les heures). Cette détection repose sur l'identifiant de build `SOURCE_COMMIT`, que Coolify transmet au build. **À vérifier au premier déploiement** : `https://app.mondomaine.com/sw.js` doit contenir un identifiant stable (pas `dev`), différent après un nouveau commit.
 - Les migrations sont rejouées automatiquement. Un échec arrête le conteneur `app` : le déploiement est marqué en erreur et l'ancienne version reste servie.
 - Gardez **une seule instance** de `app` (le planificateur intégré tourne dans le processus). Pour en lancer plusieurs, mettez `DISABLE_SCHEDULER=true` et programmez `npm run jobs` par cron.
 
