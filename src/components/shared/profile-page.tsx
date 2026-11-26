@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader, DescriptionList, PageHeader } from "@/components/ui/display";
 import { Field, FormError, Input, PasswordInput } from "@/components/ui/form";
 import { useSession } from "@/components/providers";
+import { InstallSection } from "@/components/pwa/install-ui";
 import { api, ApiError } from "@/lib/api";
 import { fmtDateTime } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/labels";
@@ -96,6 +97,7 @@ export function ProfilePage({ extra }: { extra?: React.ReactNode }) {
         </CardBody>
       </Card>
       {extra}
+      <InstallSection />
       <Card>
         <CardHeader title="Mot de passe" icon={<KeyRound className="h-4 w-4" />} />
         <CardBody>

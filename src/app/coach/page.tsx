@@ -1,4 +1,5 @@
 "use client";
+import { InstallCard } from "@/components/pwa/install-ui";
 import { AlarmClock, AlertOctagon, Hourglass, Inbox, MessageSquare, Star, UserRoundSearch } from "lucide-react";
 import Link from "next/link";
 import { Card, CardHeader, EmptyState, ErrorState, Loading, PageHeader, StatCard } from "@/components/ui/display";
@@ -17,6 +18,7 @@ export default function CoachDashboard() {
   return (
     <div className="space-y-5">
       <PageHeader title="Tableau de bord" description="Vos demandes à traiter, échéances et derniers messages." />
+      <InstallCard />
       {space.data?.absent_now && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Vous êtes déclaré absent jusqu’au {fmtDateTime(space.data.absent_now.ends_at)}. Les échéances de vos demandes ne sont pas suspendues : l’administrateur est alerté si une action est nécessaire.

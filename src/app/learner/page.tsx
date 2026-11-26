@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LinkButton } from "@/components/ui/button";
 import { Alert, Avatar, Badge, Card, CardBody, CardHeader, EmptyState, ErrorState, Loading, PageHeader } from "@/components/ui/display";
 import { useSession } from "@/components/providers";
+import { InstallCard } from "@/components/pwa/install-ui";
 import { PriorityBadge, StatusBadge } from "@/components/requests/badges";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/hooks";
@@ -35,6 +36,7 @@ export default function LearnerHome() {
           ) : null
         }
       />
+      <InstallCard />
 
       {!e.ok && (
         <Alert tone="warning" title="Vous ne pouvez pas soumettre de nouvelle demande">

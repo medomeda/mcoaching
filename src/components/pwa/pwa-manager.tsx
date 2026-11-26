@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { DEMO_MODE } from "@/lib/api";
 import { watchRegistration } from "@/lib/pwa/update-watcher";
+import { captureInstallPrompt, markInstalled } from "./install-store";
 
 const UPDATE_CHECK_MS = 60 * 60 * 1000;
 const UPDATE_TOAST_ID = "mentora-update";
@@ -16,6 +17,15 @@ const UPDATE_TOAST_ID = "mentora-update";
  * Inactif en démonstration, et désactivé en développement (incompatible avec le rechargement à chaud).
  */
 export function PwaManager() {
+  useEffect(() => {
+    window.addEventListener("beforeinstallprompt", captureInstallPrompt);
+    window.addEventListener("appinstalled", markInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", captureInstallPrompt);
+      window.removeEventListener("appinstalled", markInstalled);
+    };
+  }, []);
+
   useEffect(() => {
     if (DEMO_MODE || !("serviceWorker" in navigator)) return;
 

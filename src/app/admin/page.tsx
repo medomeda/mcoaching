@@ -1,4 +1,5 @@
 "use client";
+import { InstallCard } from "@/components/pwa/install-ui";
 import { keepPreviousData } from "@tanstack/react-query";
 import { AlertOctagon, Clock, Inbox, Percent, Star, TrendingUp } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +18,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-5">
       <PageHeader title="Tableau de bord" description="Supervision du service d’accompagnement individuel." actions={picker} />
+      <InstallCard />
       {q.isLoading ? (
         <Loading />
       ) : q.error ? (
