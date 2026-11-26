@@ -8,6 +8,7 @@ import * as coaches from "./coaches";
 import type { LiveCall } from "./context";
 import * as entitlements from "./entitlements";
 import * as notifications from "./notifications";
+import * as push from "./push";
 import * as reports from "./reports";
 import * as requests from "./requests";
 import * as settings from "./settings";
@@ -109,6 +110,12 @@ export const liveModules: Record<string, Record<string, LiveFn>> = {
     listJobRuns: notifications.listJobRuns,
     runJobsNow: notifications.runJobsNow,
     incidentsSummary: notifications.incidentsSummary,
+  },
+  push: {
+    savePushSubscription: push.savePushSubscription,
+    removePushSubscription: push.removePushSubscription,
+    getPushState: push.getPushState,
+    sendTestPush: push.sendTestPush,
   },
   reports: {
     adminDashboard: reports.adminDashboard,

@@ -64,6 +64,13 @@
       "when": 1795609181128,
       "tag": "0008_suspension",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795698250235,
+      "tag": "0009_push_subscriptions",
+      "breakpoints": true
     }
   ]
 }

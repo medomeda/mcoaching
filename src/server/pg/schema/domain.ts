@@ -400,6 +400,25 @@ export const notification = pgTable(
   (t) => [index("notification_user_idx").on(t.userId, t.createdAt)],
 );
 
+/**
+ * Appareils abonnés aux notifications push (Web Push). Un point d'accès par appareil : si une autre personne s'y
+ * connecte, la ligne lui est réattribuée. Les clés ne servent qu'à chiffrer les envois vers cet appareil.
+ */
+export const pushSubscription = pgTable(
+  "push_subscription",
+  {
+    id: text().primaryKey(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    endpoint: text().notNull().unique(),
+    p256dh: text().notNull(),
+    auth: text().notNull(),
+    userAgent: text("user_agent"),
+    createdAt: created(),
+    lastSuccessAt: ts("last_success_at"),
+  },
+  (t) => [index("push_subscription_user_idx").on(t.userId)],
+);
+
 export const emailDeliveryLog = pgTable(
   "email_delivery_log",
   {
