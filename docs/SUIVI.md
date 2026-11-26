@@ -1,4 +1,4 @@
-# Suivi du projet — Mentora (dépôt « mcoaching »)
+# Suivi du projet — Mentora (dossier « mentora »)
 
 Document de référence pour suivre l'avancement. À mettre à jour à chaque étape terminée (section 6).
 Dernière mise à jour : 27/10/2026.
