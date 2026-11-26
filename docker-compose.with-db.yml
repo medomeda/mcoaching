@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_USER: ${SERVICE_USER_POSTGRES}
       POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
-      POSTGRES_DB: ${POSTGRES_DB:-mcoaching}
+      POSTGRES_DB: ${POSTGRES_DB:-mentora}
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -32,7 +32,7 @@ services:
     environment:
       # Coolify route le domaine du service « app » vers le port 3600 (valeur générée, modifiable dans l'interface).
       SERVICE_URL_APP_3600: /
-      DATABASE_URL: postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@db:5432/${POSTGRES_DB:-mcoaching}
+      DATABASE_URL: postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@db:5432/${POSTGRES_DB:-mentora}
       # Secret BetterAuth généré une fois par Coolify. Ne jamais le changer : toutes les sessions seraient invalidées.
       AUTH_SECRET: ${SERVICE_HEX_64_AUTHSECRET}
       # Adresse publique EXACTE (https://votre-domaine, sans barre finale) : liens des e-mails, cookies, contrôle d'origine.
@@ -69,7 +69,7 @@ services:
   #   restart: unless-stopped
   #   environment:
   #     POSTGRES_HOST: db
-  #     POSTGRES_DB: ${POSTGRES_DB:-mcoaching}
+  #     POSTGRES_DB: ${POSTGRES_DB:-mentora}
   #     POSTGRES_USER: ${SERVICE_USER_POSTGRES}
   #     POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
   #     SCHEDULE: ${BACKUP_SCHEDULE:-@daily}

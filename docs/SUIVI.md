@@ -1,7 +1,7 @@
 # Suivi du projet — Mentora (dossier « mentora »)
 
 Document de référence pour suivre l'avancement. À mettre à jour à chaque étape terminée (section 6).
-Dernière mise à jour : 27/10/2026.
+Dernière mise à jour : 26/11/2026.
 
 ## 1. Le produit en bref
 
@@ -63,6 +63,12 @@ Garanties de cohérence : verrous `SELECT … FOR UPDATE`, verrous consultatifs,
 - **Procédure d'un nouveau client** : `docs/MISE_EN_SERVICE_CLIENT.md` ; sauvegarde de toutes les bases : `scripts/ops/backup-all.sh`.
 - **Vérifié** : 113 tests unitaires et d'intégration dans `site/`, 63 dans la racine (dont 7 sur les points d'accès `ops`, sur base jetable), 5 parcours Playwright dans `site/` dont le parcours complet « demande d'essai → client → deux instances réelles → suspension → réactivation ». Pour relancer ce parcours : `export MENTORA_STANDALONE_DIR=$(site/scripts/build-mentora-for-e2e.sh)` puis `cd site && npx playwright test`.
 - **Limites connues** : les instances existantes doivent être mises à jour (nouvelle image + `OPS_API_KEY`) pour être supervisées ; paiement et facturation restent manuels ; pas d'e-mail de notification (le tableau de bord est la seule voie d'alerte).
+
+### 3.6 Renommage et identité visuelle (26/11/2026)
+- Le dossier du projet est devenu `mentora` : plus aucune trace de l'ancien nom `mcoaching` (clés du mode démo, planificateur, bases de test, documentation, nom de base PostgreSQL par défaut `mentora`).
+- **Logo** : bulles bleu nuit sur fond or (`gold-500`), identique dans l'application et le site, icône d'onglet comprise. Le fond menthe a été abandonné : couleur absente du reste de l'interface.
+- **Images du site public** (`site/public/images/`) régénérées depuis le mode démo avec le nouveau logo, sans le bouton « Démo ».
+- **Docker** : `docker-compose.yml` = application seule avec base PostgreSQL indépendante (variante par défaut) ; `docker-compose.with-db.yml` = base + application (sauvegarde en commentaire). Déploiement Coolify repris de zéro.
 
 ## 4. Deux modes de fonctionnement
 
