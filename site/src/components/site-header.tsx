@@ -1,4 +1,4 @@
-import { Compass } from "lucide-react";
+import { LogoMark } from "./logo-mark";
 import Link from "next/link";
 
 const NAV = [
@@ -13,7 +13,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 font-bold text-brand-900">
-          <span className="grid size-8 place-items-center rounded-lg bg-brand-900 text-gold-500"><Compass className="size-5" aria-hidden /></span>
+          <LogoMark />
           Mentora
         </Link>
         <nav aria-label="Navigation principale" className="hidden items-center gap-6 text-sm text-slate-700 md:flex">

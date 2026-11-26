@@ -1,5 +1,5 @@
 "use client";
-import { Compass } from "lucide-react";
+import { LogoMark } from "@/components/ui/logo-mark";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { useBranding } from "@/lib/branding";
@@ -10,9 +10,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col bg-gradient-to-b from-brand-900 via-brand-800 to-brand-700 lg:flex-row">
       <section className="hidden flex-1 flex-col justify-between p-10 text-white lg:flex">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold-500 shadow">
-            <Compass className="h-5 w-5" aria-hidden />
-          </span>
+          <LogoMark size="lg" />
           <span className="text-lg font-semibold">{name}</span>
         </div>
         <div className="max-w-md space-y-4">
@@ -39,9 +37,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <section className="flex flex-1 items-start justify-center px-4 py-8 sm:items-center lg:max-w-xl lg:bg-canvas">
         <div className="w-full max-w-md">
           <div className="mb-6 flex items-center justify-center gap-2 text-white lg:hidden">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-500">
-              <Compass className="h-5 w-5" aria-hidden />
-            </span>
+            <LogoMark />
             <span className="text-lg font-semibold">{name}</span>
           </div>
           <Suspense>{children}</Suspense>

@@ -1,6 +1,7 @@
 "use client";
 
-import { Compass, Gauge, LogOut, ScrollText, Tags, UserPlus, Users } from "lucide-react";
+import { LogoMark } from "@/components/logo-mark";
+import { Gauge, LogOut, ScrollText, Tags, UserPlus, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -18,7 +19,7 @@ export function AdminNav() {
   const router = useRouter();
   return (
     <aside className="border-b border-slate-200 bg-brand-900 text-white md:min-h-screen md:border-b-0">
-      <div className="flex items-center gap-2 px-4 py-4 font-bold"><Compass className="size-5 text-gold-500" aria-hidden />Mentora · opérateur</div>
+      <div className="flex items-center gap-2 px-4 py-4 font-bold"><LogoMark size="sm" />Mentora · opérateur</div>
       <nav aria-label="Navigation du tableau de bord" className="flex gap-1 overflow-x-auto px-2 pb-2 md:flex-col md:pb-0">
         {ITEMS.map((i) => {
           const active = "exact" in i ? path === i.href : path.startsWith(i.href);

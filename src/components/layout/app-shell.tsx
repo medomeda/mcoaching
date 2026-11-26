@@ -1,7 +1,8 @@
 "use client";
 import * as D from "@radix-ui/react-dialog";
 import { clsx } from "clsx";
-import { Bell, ChevronDown, LogOut, Compass, Menu, UserRound, X } from "lucide-react";
+import { LogoMark } from "@/components/ui/logo-mark";
+import { Bell, ChevronDown, LogOut, Menu, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -28,9 +29,7 @@ function Brand() {
   const { name } = useBranding();
   return (
     <Link href="/" className="flex items-center gap-2.5 px-2">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold-500 text-white shadow-sm">
-        <Compass className="h-5 w-5" aria-hidden />
-      </span>
+      <LogoMark />
       <span className="leading-tight">
         <span className="block text-sm font-semibold text-white">{name}</span>
         <span className="block text-[11px] text-brand-200">Accompagnement individuel</span>
