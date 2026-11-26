@@ -19,6 +19,9 @@ COPY . .
 ARG NEXT_PUBLIC_DEMO_MODE=false
 ENV NEXT_PUBLIC_DEMO_MODE=$NEXT_PUBLIC_DEMO_MODE
 ENV NEXT_TELEMETRY_DISABLED=1
+# Identifiant de la version déployée (fourni par Coolify) : il change le service worker à chaque déploiement.
+ARG SOURCE_COMMIT=""
+ENV SOURCE_COMMIT=$SOURCE_COMMIT
 # Valeur factice : la compilation n'ouvre aucune connexion, mais le module vérifie sa présence.
 ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
 RUN npm run build

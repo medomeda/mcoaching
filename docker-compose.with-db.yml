@@ -25,6 +25,7 @@ services:
       target: runner
       args:
         NEXT_PUBLIC_DEMO_MODE: "false"
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-}
     restart: unless-stopped
     # Pas de « ports » : le proxy de Coolify joint le conteneur sur le réseau interne (domaine à renseigner dans l'interface).
     expose:
