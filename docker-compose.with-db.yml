@@ -1,0 +1,88 @@
+# Variante TOUT-EN-UN : PostgreSQL + application + sauvegardes quotidiennes dans un même déploiement.
+# La variante par défaut (docker-compose.yml) utilise une base PostgreSQL indépendante : voir docs/DEPLOIEMENT_COOLIFY.md.
+# Coolify : « Docker Compose Location » = /docker-compose.with-db.yml ; les variables SERVICE_* sont générées par Coolify.
+# En local : docker compose -f docker-compose.with-db.yml -f docker-compose.local.yml --env-file .env.docker up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${SERVICE_USER_POSTGRES}
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      POSTGRES_DB: ${POSTGRES_DB:-mcoaching}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        NEXT_PUBLIC_DEMO_MODE: "false"
+    restart: unless-stopped
+    # Pas de « ports » : le proxy de Coolify joint le conteneur sur le réseau interne (domaine à renseigner dans l'interface).
+    expose:
+      - "3600"
+    environment:
+      # Coolify route le domaine du service « app » vers le port 3600 (valeur générée, modifiable dans l'interface).
+      SERVICE_URL_APP_3600: /
+      DATABASE_URL: postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@db:5432/${POSTGRES_DB:-mcoaching}
+      # Secret BetterAuth généré une fois par Coolify. Ne jamais le changer : toutes les sessions seraient invalidées.
+      AUTH_SECRET: ${SERVICE_HEX_64_AUTHSECRET}
+      # Adresse publique EXACTE (https://votre-domaine, sans barre finale) : liens des e-mails, cookies, contrôle d'origine.
+      APP_URL: ${APP_URL:-${SERVICE_URL_APP_3600}}
+      # Autres adresses acceptées (ex. https://www.mondomaine.com), séparées par des virgules.
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
+      OPS_API_KEY: ${OPS_API_KEY:-}
+      APP_VERSION: ${APP_VERSION:-}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Africa/Abidjan}
+      ACTIVATION_BY_EMAIL: ${ACTIVATION_BY_EMAIL:-false}
+      # Une seule instance : le planificateur intégré (échéances, e-mails) reste actif.
+      DISABLE_SCHEDULER: ${DISABLE_SCHEDULER:-false}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    volumes:
+      - storage-data:/data/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3600/login"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # Sauvegardes pg_dump quotidiennes dans le volume « backup-data » (7 jours, 4 semaines, 3 mois).
+  # backup:
+  #   image: prodrigestivill/postgres-backup-local:16
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_HOST: db
+  #     POSTGRES_DB: ${POSTGRES_DB:-mcoaching}
+  #     POSTGRES_USER: ${SERVICE_USER_POSTGRES}
+  #     POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+  #     SCHEDULE: ${BACKUP_SCHEDULE:-@daily}
+  #     BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-7}
+  #     BACKUP_KEEP_WEEKS: ${BACKUP_KEEP_WEEKS:-4}
+  #     BACKUP_KEEP_MONTHS: ${BACKUP_KEEP_MONTHS:-3}
+  #   volumes:
+  #     - backup-data:/backups
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+
+volumes:
+  db-data:
+  storage-data:
+  #backup-data:
