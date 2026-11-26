@@ -7,6 +7,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { AppError, isAppError } from "@/modules/core/errors";
 import { liveModules } from "@/server/live/registry";
 import { trustedOrigins } from "@/server/appUrl";
+import { withPushDelivery } from "@/server/live/pushQueue";
 
 /** Contenu binaire (pièces jointes) transmis en base64 sous la forme `{ $bytes }` par le client. */
 function reviveBytes(_key: string, value: unknown) {
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ module: st
   }
 
   try {
-    const data = await (handler as (...a: unknown[]) => Promise<unknown>)({ headers: req.headers }, ...args);
+    const data = await withPushDelivery(() => (handler as (...a: unknown[]) => Promise<unknown>)({ headers: req.headers }, ...args));
     return NextResponse.json({ data: data ?? null });
   } catch (e) {
     if (isAppError(e)) return fail(e);

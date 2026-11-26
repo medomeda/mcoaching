@@ -4,6 +4,7 @@
  * L'idempotence repose sur les clés d'événement uniques (`notification_event`) : rejouées au même instant,
  * les tâches ne produisent aucun doublon et ne modifient jamais une échéance enregistrée.
  */
+import { withPushDelivery } from "./pushQueue";
 import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, lte, or, sql } from "drizzle-orm";
 import { REQUEST_STATUSES } from "@/modules/core/types";
 import { isOpen } from "@/modules/requests/stateMachine";
@@ -284,6 +285,11 @@ export async function processEmails(_runStart: Date, s: JobsSummary): Promise<vo
 
 /** Exécute les tâches ; une tâche en échec ne bloque pas les autres. Journalise si quelque chose a changé. */
 export async function runScheduledJobs(): Promise<JobsSummary> {
+  // Les push des notifications créées par les tâches (rappels, retards) partent à la fin de l'exécution.
+  return withPushDelivery(runScheduledJobsInner);
+}
+
+async function runScheduledJobsInner(): Promise<JobsSummary> {
   const started = new Date();
   const s: JobsSummary = { reminders: 0, overdue: 0, escalations: 0, coachAlerts: 0, emailsSent: 0, emailsFailed: 0, cleaned: 0 };
   let error: string | null = null;

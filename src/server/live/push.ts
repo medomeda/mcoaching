@@ -6,11 +6,15 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { businessRule } from "@/modules/core/errors";
+import type { NotificationType } from "@/modules/core/types";
 import { parse } from "@/modules/core/validation";
 import { newId } from "../crypto";
 import { db } from "../pg/client";
-import { pushSubscription } from "../pg/schema";
+import { getSuspension } from "../ops/usage";
+import { notification, pushSubscription, user } from "../pg/schema";
+import { getBrandName } from "./branding";
 import { authenticate, type LiveCall } from "./context";
+import { notificationPath } from "./helpers";
 
 export const pushConfigured = (): boolean => Boolean(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
 export const vapidPublicKey = (): string | null => process.env.VAPID_PUBLIC_KEY || null;
@@ -114,4 +118,66 @@ export async function sendTestPush(call: LiveCall) {
   const subs = await db.select().from(pushSubscription).where(eq(pushSubscription.userId, a.user.id));
   const { sent } = await sendToSubscriptions(subs, { title: "Notification de test", body: "Les notifications fonctionnent sur cet appareil.", url: "/", tag: "mentora-test" });
   return { sent };
+}
+
+/* ------------------------------------------------------------------ Texte des notifications */
+
+/**
+ * Confidentialité : le texte affiché sur l'écran verrouillé n'est que le TYPE d'événement. Jamais de titre de demande,
+ * de nom ni d'extrait de message : le détail se lit dans l'application, après connexion.
+ */
+const TITLES: Record<NotificationType, string> = {
+  REQUEST_SUBMITTED: "Nouvelle demande",
+  REQUEST_ASSIGNED: "Demande affectée",
+  REASSIGNMENT: "Demande affectée",
+  NEW_MESSAGE: "Nouveau message",
+  CLARIFICATION_REQUESTED: "Précisions demandées",
+  COACH_RESPONSE: "Réponse de votre coach",
+  REQUEST_CLOSED: "Demande clôturée",
+  REQUEST_REOPENED: "Demande réouverte",
+  RATING_AVAILABLE: "Évaluation",
+  RATING_RECEIVED: "Évaluation",
+  DEADLINE_REMINDER: "Échéance proche",
+  REQUEST_OVERDUE: "Demande en retard",
+  ESCALATION: "Demande en retard",
+  COACH_UNAVAILABLE: "Information de la plateforme",
+  NOTIFICATION_FAILURE: "Information de la plateforme",
+  ACCOUNT: "Information de la plateforme",
+};
+
+export function pushTextFor(type: NotificationType, brandName: string): { title: string; body: string } {
+  return { title: TITLES[type], body: `Ouvrez ${brandName} pour les détails.` };
+}
+
+/**
+ * Envoie les push correspondant à des notifications internes qui viennent d'être validées. Relit les lignes en base
+ * (une transaction annulée n'en a créé aucune). Rien n'est envoyé sans clés VAPID, si l'instance est suspendue, ni
+ * à un compte qui n'est pas actif. Ne lève jamais : renvoie le nombre d'envois réussis.
+ */
+export async function deliverPush(notificationIds: string[]): Promise<number> {
+  try {
+    if (notificationIds.length === 0 || !pushConfigured()) return 0;
+    if ((await getSuspension()).suspended) return 0;
+    const rows = await db
+      .select({ n: notification, role: user.role, status: user.status })
+      .from(notification)
+      .innerJoin(user, eq(user.id, notification.userId))
+      .where(inArray(notification.id, notificationIds));
+    const active = rows.filter((r) => r.status === "ACTIVE");
+    if (active.length === 0) return 0;
+    const subs = await db.select().from(pushSubscription).where(inArray(pushSubscription.userId, [...new Set(active.map((r) => r.n.userId))]));
+    if (subs.length === 0) return 0;
+    const brand = await getBrandName();
+    let total = 0;
+    for (const r of active) {
+      const mine = subs.filter((s) => s.userId === r.n.userId);
+      if (mine.length === 0) continue;
+      const payload: PushPayload = { ...pushTextFor(r.n.type, brand), url: notificationPath(r.role, r.n.relatedRequestId), tag: `mentora-${r.n.id}` };
+      total += (await sendToSubscriptions(mine, payload)).sent;
+    }
+    return total;
+  } catch (err) {
+    console.error("[push] envoi impossible", err instanceof Error ? err.message : err);
+    return 0;
+  }
 }

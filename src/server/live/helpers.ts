@@ -11,6 +11,7 @@ import { sendEmail } from "../mail/sender";
 import { db, type Db } from "../pg/client";
 import { auditLog, emailDeliveryLog, notification, notificationEvent, user, verification } from "../pg/schema";
 import { appUrl } from "../appUrl";
+import { queuePush } from "./pushQueue";
 
 /** Transaction Drizzle ou client direct : les helpers acceptent les deux. */
 export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0] | Db;
@@ -89,6 +90,11 @@ export function requestPath(role: UserRowDb["role"], requestId: string): string 
   return `/${spaceOf(role)}/requests/${requestId}`;
 }
 
+/** Lien ouvert depuis une notification (e-mail ou push) : la demande concernée, sinon la liste des notifications. */
+export function notificationPath(role: UserRowDb["role"], requestId: string | null | undefined): string {
+  return requestId ? requestPath(role, requestId) : `/${spaceOf(role)}/notifications`;
+}
+
 /**
  * Notification (PRD §7.4, §9.11), à appeler DANS la transaction métier — même règle que `notify.ts` :
  * - anti-doublon : une clé d'événement unique par destinataire (`notification_event`) ;
@@ -128,6 +134,7 @@ export async function notify(
       createdAt: now,
     });
     created++;
+    queuePush(notificationId); // envoi après validation de la transaction (voir pushQueue.ts)
     if (input.email !== false && r.status !== "SUSPENDED") {
       await tx.insert(emailDeliveryLog).values({
         id: newId("eml"),
@@ -139,7 +146,7 @@ export async function notify(
           name: r.name,
           title: input.title,
           summary: input.summary,
-          link: input.requestId ? requestPath(r.role, input.requestId) : `/${spaceOf(r.role)}/notifications`,
+          link: notificationPath(r.role, input.requestId),
         },
         status: "PENDING",
         nextAttemptAt: now,
