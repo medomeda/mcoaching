@@ -306,8 +306,34 @@ function migrated<M extends Record<string, unknown>>(module: string, mod: M) {
   return DEMO_MODE ? authed(mod) : live(module, mod);
 }
 
+/* ----------------------------- Notifications push ----------------------------- */
+
+export interface PushState {
+  available: boolean;
+  publicKey: string | null;
+  /** Points d'accès des appareils de la personne connectée. */
+  endpoints: string[];
+}
+interface PushApi {
+  state(): Promise<PushState>;
+  save(input: unknown): Promise<null>;
+  remove(input: unknown): Promise<null>;
+  test(): Promise<{ sent: number }>;
+}
+
+const pushUnavailable = () => Promise.reject(new ApiError("BUSINESS_RULE", "Les notifications push ne sont pas disponibles en démonstration.", 422));
+/** Démonstration : aucun serveur, donc aucun push ; l'interface affiche simplement « non disponible ». */
+const demoPush: PushApi = { state: async () => ({ available: false, publicKey: null, endpoints: [] }), save: pushUnavailable, remove: pushUnavailable, test: pushUnavailable };
+const serverPush: PushApi = {
+  state: () => rpc("push/getPushState", []),
+  save: (i) => rpc("push/savePushSubscription", [i]),
+  remove: (i) => rpc("push/removePushSubscription", [i]),
+  test: () => rpc("push/sendTestPush", []),
+};
+
 export const api = {
   auth: DEMO_MODE ? demoAuth : serverAuth,
+  push: DEMO_MODE ? demoPush : serverPush,
   users: migrated("users", {
     listUsers: users.listUsers,
     getUserDetail: users.getUserDetail,
