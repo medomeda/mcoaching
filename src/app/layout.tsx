@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
+import { PwaManager } from "@/components/pwa/pwa-manager";
 import { Providers } from "@/components/providers";
 import { DemoToolbar } from "@/components/demo/demo-toolbar";
 import { DEFAULT_BRAND_NAME } from "@/modules/core/branding";
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Providers>
           {children}
           <DemoToolbar />
+          <PwaManager />
         </Providers>
       </body>
     </html>
