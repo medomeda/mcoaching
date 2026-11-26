@@ -17,7 +17,7 @@ let m: Mods;
 let callA: { headers: Headers };
 let callB: { headers: Headers };
 
-const device = (n: number) => ({ endpoint: `https://push.example.test/device-${n}`, keys: { p256dh: `p256dh-${n}`, auth: `auth-${n}` } });
+const device = (n: number) => ({ endpoint: `https://fcm.googleapis.com/fcm/send/device-${n}`, keys: { p256dh: `p256dh-${n}`, auth: `auth-${n}` } });
 
 /** Vraie session BetterAuth : le cookie renvoyé par la connexion devient les en-têtes de l'appel. */
 async function sessionFor(email: string): Promise<{ headers: Headers }> {
@@ -103,6 +103,36 @@ describe.skipIf(!liveDbAvailable)("abonnements push", () => {
   it("refuse un point d'accès qui n'est pas en https ou des clés vides", async () => {
     await expect(m.push.savePushSubscription(callA, { ...device(1), endpoint: "http://push.example.test/x" })).rejects.toMatchObject({ code: "VALIDATION" });
     await expect(m.push.savePushSubscription(callA, { endpoint: device(1).endpoint, keys: { p256dh: "", auth: "a" } })).rejects.toMatchObject({ code: "VALIDATION" });
+  });
+
+  it("n'accepte que les services push des navigateurs : jamais une adresse interne ou arbitraire (requête serveur vers un tiers)", async () => {
+    const accepted = [
+      "https://fcm.googleapis.com/fcm/send/abc",
+      "https://updates.push.services.mozilla.com/wpush/v2/abc",
+      "https://wns2-par02p.notify.windows.com/w/?token=abc",
+      "https://web.push.apple.com/abc",
+    ];
+    for (const endpoint of accepted) {
+      await m.push.savePushSubscription(callA, { ...device(1), endpoint });
+      await m.push.removePushSubscription(callA, { endpoint });
+    }
+    const refused = [
+      "https://10.0.0.5:8443/internal",
+      "https://localhost/x",
+      "https://127.0.0.1/x",
+      "https://coolify-db/x",
+      "https://evil.example.com/x",
+      "https://fcm.googleapis.com.evil.com/x", // préfixe trompeur
+      "https://fcm.googleapis.com@evil.com/x", // identifiants avant le vrai hôte
+      "https://user:pass@fcm.googleapis.com/x",
+      "https://fcm.googleapis.com:8443/x", // port non standard
+      "https://evilfcm.googleapis.com/x",
+      "https://notpush.apple.com.evil.io/x",
+    ];
+    for (const endpoint of refused) {
+      await expect(m.push.savePushSubscription(callA, { ...device(1), endpoint }), endpoint).rejects.toMatchObject({ code: "VALIDATION" });
+    }
+    expect(await rows()).toHaveLength(0);
   });
 
   it("exige une session", async () => {

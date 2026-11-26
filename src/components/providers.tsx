@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from "@tan
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
-import { clearAppCaches, disablePush } from "@/components/pwa/push-client";
+import { clearAppCaches, disablePush, releaseForeignPushSubscription } from "@/components/pwa/push-client";
 import type { PublicUser } from "@/server/api/auth";
 import { getRuntime } from "@/server/runtime";
 import { api, ApiError, DEMO_MODE, hasSession, onServerMutation, onSessionLost } from "@/lib/api";
@@ -101,6 +101,12 @@ function SessionProvider({ children }: { children: ReactNode }) {
       unsubscribe();
     };
   }, [router, qc]);
+
+  // Appareil partagé : une session peut avoir pris fin sans « Se déconnecter » (expiration, mot de passe changé, compte suspendu).
+  // À l'ouverture d'une session, on libère l'abonnement push resté au nom de la personne précédente.
+  useEffect(() => {
+    if (status === "authenticated" && !DEMO_MODE) void releaseForeignPushSubscription();
+  }, [status, user?.id]);
 
   const logout = useCallback(async () => {
     // Appareil partagé : l'appareil est retiré du serveur AVANT la fin de session (elle doit encore être valide pour

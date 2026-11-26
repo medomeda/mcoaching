@@ -41,6 +41,23 @@ describe("pushSupportOf", () => {
   });
 });
 
+describe("isForeignSubscription (appareil partagé)", () => {
+  const mine = ["https://fcm.googleapis.com/fcm/send/mien"];
+
+  it("reconnaît l'abonnement d'une autre personne : l'appareil est abonné mais pas pour le compte connecté", () => {
+    expect(client.isForeignSubscription("https://fcm.googleapis.com/fcm/send/ancien-compte", mine)).toBe(true);
+    expect(client.isForeignSubscription("https://fcm.googleapis.com/fcm/send/ancien-compte", [])).toBe(true);
+  });
+
+  it("laisse en place l'abonnement du compte connecté", () => {
+    expect(client.isForeignSubscription(mine[0]!, mine)).toBe(false);
+  });
+
+  it("ne fait rien sans abonnement sur l'appareil", () => {
+    expect(client.isForeignSubscription(null, mine)).toBe(false);
+  });
+});
+
 describe("api.push en démonstration", () => {
   it("indique que la fonction n'est pas disponible, sans appel au serveur", async () => {
     expect(await apiMod.api.push.state()).toEqual({ available: false, publicKey: null, endpoints: [] });

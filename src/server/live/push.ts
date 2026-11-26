@@ -46,8 +46,27 @@ export function setPushSender(fn: Sender | null) {
   sender = fn ?? realSender;
 }
 
+/**
+ * Services push des navigateurs : seuls leurs hôtes sont acceptés. Sans cette liste, n'importe quel utilisateur
+ * connecté pourrait faire envoyer au serveur une requête vers une adresse interne ou arbitraire (« Envoyer un test »),
+ * et déduire de la réponse ce qui répond à l'intérieur du réseau.
+ */
+const PUSH_HOSTS = ["fcm.googleapis.com", "android.googleapis.com"]; // Chrome, Edge, Opera, Samsung… (FCM)
+const PUSH_HOST_SUFFIXES = [".push.services.mozilla.com", ".notify.windows.com", ".push.apple.com"]; // Firefox, Windows, Safari
+
+export function isPushServiceUrl(endpoint: string): boolean {
+  try {
+    const u = new URL(endpoint);
+    if (u.protocol !== "https:" || u.username || u.password || (u.port && u.port !== "443")) return false;
+    const host = u.hostname.toLowerCase();
+    return PUSH_HOSTS.includes(host) || PUSH_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix));
+  } catch {
+    return false;
+  }
+}
+
 const zSubscription = z.object({
-  endpoint: z.string().trim().max(2048).refine((u) => u.startsWith("https://") && URL.canParse(u), "Adresse d’appareil invalide."),
+  endpoint: z.string().trim().max(2048).refine(isPushServiceUrl, "Ce navigateur utilise un service de notification non pris en charge."),
   keys: z.object({ p256dh: z.string().min(1).max(512), auth: z.string().min(1).max(512) }),
 });
 const zEndpoint = z.object({ endpoint: z.string().trim().min(1).max(2048) });

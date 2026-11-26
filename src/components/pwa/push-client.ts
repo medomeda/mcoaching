@@ -77,6 +77,30 @@ export async function disablePush(): Promise<void> {
   }
 }
 
+/** L'abonnement de cet appareil appartient-il à quelqu'un d'autre que la personne connectée ? */
+export function isForeignSubscription(localEndpoint: string | null, ownEndpoints: string[]): boolean {
+  return localEndpoint !== null && !ownEndpoints.includes(localEndpoint);
+}
+
+/**
+ * À l'ouverture d'une session : l'appareil est peut-être resté abonné pour la personne précédente (session expirée,
+ * mot de passe changé, compte suspendu… sans passer par « Se déconnecter »). On se désabonne alors localement : le
+ * service push invalide l'adresse, donc l'ancien compte ne reçoit plus rien ici et le serveur l'oublie au prochain
+ * envoi. La nouvelle personne active ses propres notifications d'un clic. Ne lève jamais ; sans état serveur lisible,
+ * on ne touche à rien.
+ */
+export async function releaseForeignPushSubscription(): Promise<void> {
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = await reg?.pushManager.getSubscription();
+    if (!sub) return;
+    const state = await api.push.state();
+    if (isForeignSubscription(sub.endpoint, state.endpoints)) await sub.unsubscribe();
+  } catch {
+    /* sans conséquence : l'abonnement serveur sera purgé au prochain échec d'envoi */
+  }
+}
+
 /** À la déconnexion : rien ne doit rester sur un appareil partagé. Vide les caches de l'application. Ne lève jamais. */
 export async function clearAppCaches(): Promise<void> {
   try {

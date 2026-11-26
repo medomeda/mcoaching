@@ -176,6 +176,35 @@ describe.skipIf(!liveDbAvailable)("envoi des push", () => {
     await m.queue.settlePushDeliveries();
   });
 
+  it("via la vraie route RPC : un appel qui crée une notification envoie exactement un push", async () => {
+    arm();
+    await subscribe("usr_k");
+    const { NextRequest } = await import("next/server");
+    const { POST } = await import("@/app/api/rpc/[module]/[fn]/route");
+    const { liveModules } = await import("@/server/live/registry");
+    (liveModules as Record<string, Record<string, unknown>>).pushwire = { go: async () => (await notifyOnce("usr_k"), "ok") };
+    const res = await POST(new NextRequest("http://localhost:3600/api/rpc/pushwire/go", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ args: [] }) }), {
+      params: Promise.resolve({ module: "pushwire", fn: "go" }),
+    });
+    expect(await res.json()).toEqual({ data: "ok" });
+    await m.queue.settlePushDeliveries();
+    expect(sent).toHaveLength(1);
+  });
+
+  it("via la route RPC avec un collecteur imbriqué (comme runJobsNow) : jamais d'envoi en double", async () => {
+    arm();
+    await subscribe("usr_k");
+    const { NextRequest } = await import("next/server");
+    const { POST } = await import("@/app/api/rpc/[module]/[fn]/route");
+    const { liveModules } = await import("@/server/live/registry");
+    (liveModules as Record<string, Record<string, unknown>>).pushwire = { nested: async () => m.queue.withPushDelivery(() => notifyOnce("usr_k")) };
+    await POST(new NextRequest("http://localhost:3600/api/rpc/pushwire/nested", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ args: [] }) }), {
+      params: Promise.resolve({ module: "pushwire", fn: "nested" }),
+    });
+    await m.queue.settlePushDeliveries();
+    expect(sent).toHaveLength(1);
+  });
+
   it("hors collecteur, notify() n'envoie rien et n'échoue pas", async () => {
     arm();
     await subscribe("usr_k");
