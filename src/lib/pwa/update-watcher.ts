@@ -15,22 +15,31 @@ export interface UpdateHandlers {
 /** Surveille un enregistrement ; renvoie la fonction qui retire les écouteurs. */
 export function watchRegistration(reg: ServiceWorkerRegistration, container: ServiceWorkerContainer, h: UpdateHandlers): () => void {
   let accepted = false;
+  let stopped = false;
+  const offered = new WeakSet<ServiceWorker>(); // une même version n'est jamais proposée deux fois
 
-  const offer = (worker: ServiceWorker) =>
+  const offer = (worker: ServiceWorker) => {
+    if (stopped || offered.has(worker)) return;
+    offered.add(worker);
     h.offerUpdate(() => {
       accepted = true;
       worker.postMessage({ type: "SKIP_WAITING" });
     });
+  };
 
-  // Une version déjà téléchargée attend peut-être depuis la dernière visite.
-  if (reg.waiting && container.controller) offer(reg.waiting);
-
-  const onUpdateFound = () => {
-    const worker = reg.installing;
-    worker?.addEventListener("statechange", () => {
+  const track = (worker: ServiceWorker) =>
+    worker.addEventListener("statechange", () => {
       // « installed » avec un contrôleur déjà en place = mise à jour (et non première installation).
       if (worker.state === "installed" && container.controller) offer(worker);
     });
+
+  // Une version déjà téléchargée attend peut-être depuis la dernière visite.
+  if (reg.waiting && container.controller) offer(reg.waiting);
+  // Une installation peut déjà être en cours (page hydratée en retard) : l'événement « updatefound » est alors passé.
+  if (reg.installing) track(reg.installing);
+
+  const onUpdateFound = () => {
+    if (reg.installing) track(reg.installing);
   };
 
   const onControllerChange = () => {
@@ -43,6 +52,7 @@ export function watchRegistration(reg: ServiceWorkerRegistration, container: Ser
   reg.addEventListener("updatefound", onUpdateFound);
   container.addEventListener("controllerchange", onControllerChange);
   return () => {
+    stopped = true;
     reg.removeEventListener("updatefound", onUpdateFound);
     container.removeEventListener("controllerchange", onControllerChange);
   };

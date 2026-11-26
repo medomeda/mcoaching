@@ -18,11 +18,12 @@ class FakeContainer extends EventTarget {
   controller: object | null = {};
 }
 
-function setup(opts: { controller?: boolean; waiting?: boolean } = {}) {
+function setup(opts: { controller?: boolean; waiting?: boolean; installing?: FakeWorker } = {}) {
   const reg = new FakeRegistration();
   const container = new FakeContainer();
   if (opts.controller === false) container.controller = null;
   if (opts.waiting) reg.waiting = new FakeWorker();
+  if (opts.installing) reg.installing = opts.installing;
   const offers: Array<() => void> = [];
   const h = { offerUpdate: vi.fn((apply: () => void) => offers.push(apply)), reload: vi.fn() };
   const stop = watchRegistration(reg as unknown as ServiceWorkerRegistration, container as unknown as ServiceWorkerContainer, h);
@@ -93,5 +94,30 @@ describe("watchRegistration", () => {
     w.become("installed");
     expect(h.reload).not.toHaveBeenCalled();
     expect(h.offerUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("propose une version dont l'installation est déjà en cours quand la surveillance démarre (page hydratée en retard)", () => {
+    const w = new FakeWorker();
+    const { h } = setup({ installing: w });
+    expect(h.offerUpdate).not.toHaveBeenCalled();
+    w.become("installed");
+    expect(h.offerUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("ne propose jamais deux fois la même version", () => {
+    const w = new FakeWorker();
+    const { reg, h } = setup({ installing: w });
+    reg.dispatchEvent(new Event("updatefound")); // même worker annoncé de nouveau
+    w.become("installed");
+    w.become("installed");
+    expect(h.offerUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("ne propose plus rien après le nettoyage, même pour un worker déjà suivi", () => {
+    const w = new FakeWorker();
+    const { h, stop } = setup({ installing: w });
+    stop();
+    w.become("installed");
+    expect(h.offerUpdate).not.toHaveBeenCalled();
   });
 });
